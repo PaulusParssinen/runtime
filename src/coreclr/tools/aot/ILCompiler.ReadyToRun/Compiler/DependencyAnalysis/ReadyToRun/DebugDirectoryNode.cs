@@ -69,7 +69,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             + (_perfMapEntry is not null ? 1 : 0)
             + (_insertDeterministicEntry ? 1 : 0)) * ImageDebugDirectorySize;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             string directoryName;

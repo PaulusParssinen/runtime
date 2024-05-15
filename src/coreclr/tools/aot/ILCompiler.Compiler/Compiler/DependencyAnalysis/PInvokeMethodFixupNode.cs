@@ -27,10 +27,10 @@ namespace ILCompiler.DependencyAnalysis
             _pInvokeMethodData = pInvokeMethodData;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("__pinvoke_"u8);
-            _pInvokeMethodData.AppendMangledName(nameMangler, sb);
+            _pInvokeMethodData.AppendMangledName(nameMangler, ref sb);
         }
         public int Offset => 0;
         public override bool IsShareable => true;
@@ -227,9 +227,9 @@ namespace ILCompiler.DependencyAnalysis
             return SignatureBytes.CompareTo(other.SignatureBytes);
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            ModuleData.AppendMangledName(nameMangler, sb);
+            ModuleData.AppendMangledName(nameMangler, ref sb);
             sb.Append("__"u8);
             sb.Append(EntryPointName);
             if (CharSetMangling != default)

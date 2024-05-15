@@ -340,7 +340,7 @@ namespace ILCompiler
                     return utf8MangledName;
             }
 
-            Utf8StringBuilder sb = new Utf8StringBuilder();
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
             sb.Append(GetMangledTypeName(method.OwningType));
             sb.Append("__"u8);
             sb.Append(GetUnqualifiedMangledMethodName(method));
@@ -368,16 +368,20 @@ namespace ILCompiler
 
         private Utf8String GetPrefixMangledTypeName(IPrefixMangledType prefixMangledType)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            sb.Append(EnterNameScopeSequence).Append(prefixMangledType.Prefix).Append(ExitNameScopeSequence);
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            sb.Append(EnterNameScopeSequence);
+            sb.Append(prefixMangledType.Prefix);
+            sb.Append(ExitNameScopeSequence);
             sb.Append(GetMangledTypeName(prefixMangledType.BaseType));
             return sb.ToUtf8String();
         }
 
         private Utf8String GetPrefixMangledSignatureName(IPrefixMangledSignature prefixMangledSignature)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            sb.Append(EnterNameScopeSequence).Append(prefixMangledSignature.Prefix).Append(ExitNameScopeSequence);
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            sb.Append(EnterNameScopeSequence);
+            sb.Append(prefixMangledSignature.Prefix);
+            sb.Append(ExitNameScopeSequence);
 
             var signature = prefixMangledSignature.BaseSignature;
             sb.Append(signature.Flags.ToStringInvariant());
@@ -401,8 +405,10 @@ namespace ILCompiler
 
         private Utf8String GetPrefixMangledMethodName(IPrefixMangledMethod prefixMangledMethod)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            sb.Append(EnterNameScopeSequence).Append(prefixMangledMethod.Prefix).Append(ExitNameScopeSequence);
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            sb.Append(EnterNameScopeSequence);
+            sb.Append(prefixMangledMethod.Prefix);
+            sb.Append(ExitNameScopeSequence);
             sb.Append(GetMangledMethodName(prefixMangledMethod.BaseMethod));
             return sb.ToUtf8String();
         }
@@ -439,7 +445,7 @@ namespace ILCompiler
             if (methodDefinition != method)
             {
                 // Instantiated generic method
-                Utf8StringBuilder sb = new Utf8StringBuilder();
+                Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
                 sb.Append(GetUnqualifiedMangledMethodName(methodDefinition.GetTypicalMethodDefinition()));
 
                 sb.Append(EnterNameScopeSequence);
@@ -447,10 +453,9 @@ namespace ILCompiler
                 var inst = method.Instantiation;
                 for (int i = 0; i < inst.Length; i++)
                 {
-                    string instArgName = GetMangledTypeName(inst[i]);
                     if (i > 0)
                         sb.Append("__"u8);
-                    sb.Append(instArgName);
+                    sb.Append(GetMangledTypeName(inst[i])); //instArgName
                 }
 
                 sb.Append(ExitNameScopeSequence);

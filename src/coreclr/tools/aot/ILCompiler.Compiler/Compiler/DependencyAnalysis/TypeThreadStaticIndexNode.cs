@@ -23,7 +23,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public bool IsInlined => _inlinedThreadStatics != null;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.NodeMangler.ThreadStaticsIndex(_type));
         }

@@ -284,17 +284,17 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override bool StaticDependenciesAreComputed => _methodCode != null;
 
-        public virtual void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.GetMangledMethodName(_method));
         }
 
         protected override string GetName(NodeFactory factory)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
             sb.Append("MethodWithGCInfo("u8);
-            AppendMangledName(factory.NameMangler, sb);
-            sb.Append(")"u8);
+            AppendMangledName(factory.NameMangler, ref sb);
+            sb.Append(')');
             return sb.ToString();
         }
 

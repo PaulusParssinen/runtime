@@ -58,18 +58,18 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return dataBuilder.ToObjectData();
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append($@"VirtualResolutionFixupSignature({_fixupKind.ToString()}): ");
-            _declMethod.AppendMangledName(nameMangler, sb);
-            sb.Append(":"u8);
+            _declMethod.AppendMangledName(nameMangler, ref sb);
+            sb.Append(':');
             sb.Append(nameMangler.GetMangledTypeName(_implType));
-            sb.Append(":"u8);
+            sb.Append(':');
             if (_implMethod == null)
                 sb.Append("(null)"u8);
             else
-                _implMethod.AppendMangledName(nameMangler, sb);
+                _implMethod.AppendMangledName(nameMangler, ref sb);
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

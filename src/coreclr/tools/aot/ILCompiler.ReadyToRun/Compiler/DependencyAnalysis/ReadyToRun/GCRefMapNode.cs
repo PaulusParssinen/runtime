@@ -42,7 +42,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             }
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("GCRefMap->"u8);
             sb.Append(_importSection.Name);
@@ -110,8 +110,8 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         protected override string GetName(NodeFactory factory)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            AppendMangledName(factory.NameMangler, sb);
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            AppendMangledName(factory.NameMangler, ref sb);
             return sb.ToString();
         }
 

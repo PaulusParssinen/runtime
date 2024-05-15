@@ -33,10 +33,10 @@ namespace ILCompiler.DependencyAnalysis
             dataBuilder.EmitReloc(Target, RelocType.IMAGE_REL_BASED_ADDR32NB);
         }
     
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("SignaturePointer_"u8);
-            Target.AppendMangledName(nameMangler, sb);
+            Target.AppendMangledName(nameMangler, ref sb);
             if (_import.CallingMethod != null)
             {
                 sb.Append(" @ "u8);

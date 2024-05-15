@@ -46,9 +46,10 @@ namespace ILCompiler.DependencyAnalysis
             return comparer.Compare(_methodNode, ((MethodAssociatedDataNode)other)._methodNode);
         }
 
-        public virtual void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("_associatedData_"u8).Append(nameMangler.GetMangledMethodName(_methodNode.Method));
+            sb.Append("_associatedData_"u8);
+            sb.Append(nameMangler.GetMangledMethodName(_methodNode.Method));
         }
 
         public static bool MethodHasAssociatedData(IMethodNode methodNode)

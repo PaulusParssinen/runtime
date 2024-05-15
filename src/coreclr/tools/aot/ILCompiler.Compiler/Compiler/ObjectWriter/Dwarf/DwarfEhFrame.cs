@@ -50,7 +50,7 @@ namespace ILCompiler.ObjectWriter
 
         private void WriteCie(DwarfCie cie)
         {
-            Utf8StringBuilder augmentationString = new Utf8StringBuilder();
+            Utf8StringBuilder augmentationString = new Utf8StringBuilder(stackalloc byte[8]);
             uint augmentationLength = 0;
 
             if (cie.FdesHaveAugmentationData)

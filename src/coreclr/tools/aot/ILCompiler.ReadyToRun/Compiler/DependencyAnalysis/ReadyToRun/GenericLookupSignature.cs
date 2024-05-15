@@ -140,7 +140,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return dependencies;
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("GenericLookupSignature("u8);
@@ -155,16 +155,16 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
                 sb.Append(nameMangler.GetMangledMethodName(_methodArgument.Method));
                 if (_methodArgument.ConstrainedType != null)
                 {
-                    sb.Append("@"u8);
+                    sb.Append('@');
                     sb.Append(nameMangler.GetMangledTypeName(_methodArgument.ConstrainedType));
                 }
                 if (!_methodArgument.Token.IsNull)
                 {
                     sb.Append(" ["u8);
                     sb.Append(_methodArgument.Token.MetadataReader.GetString(_methodArgument.Token.MetadataReader.GetAssemblyDefinition().Name));
-                    sb.Append(":"u8);
+                    sb.Append(':');
                     sb.Append(((uint)_methodArgument.Token.Token).ToString("X8"));
-                    sb.Append("]"u8);
+                    sb.Append(']');
                 }
             }
             if (_typeArgument != null)
@@ -173,11 +173,11 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             }
             if (_fieldArgument != null)
             {
-                _fieldArgument.AppendMangledName(nameMangler, sb);
+                _fieldArgument.AppendMangledName(nameMangler, ref sb);
             }
             sb.Append(" ("u8);
-            _methodContext.AppendMangledName(nameMangler, sb);
-            sb.Append(")"u8);
+            _methodContext.AppendMangledName(nameMangler, ref sb);
+            sb.Append(')');
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

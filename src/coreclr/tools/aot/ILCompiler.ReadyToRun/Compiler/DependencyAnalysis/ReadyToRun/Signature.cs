@@ -11,7 +11,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public override bool IsShareable => true;
         public override bool StaticDependenciesAreComputed => true;
 
-        public abstract void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb);
+        public abstract void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb);
         public int Offset => 0;
         public override int ClassCode => ClassCode;
 

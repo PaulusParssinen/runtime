@@ -21,9 +21,11 @@ namespace ILCompiler.DependencyAnalysis
             _constructed = constructed;
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__RuntimeType_"u8).Append(nameMangler.GetMangledTypeName(_type));
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append("__RuntimeType_"u8);
+            sb.Append(nameMangler.GetMangledTypeName(_type));
         }
 
         protected override int ContentSize => ObjectType.InstanceByteCount.AsInt;

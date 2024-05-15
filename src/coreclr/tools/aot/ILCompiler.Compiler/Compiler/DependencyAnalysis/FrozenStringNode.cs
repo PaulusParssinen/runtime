@@ -17,9 +17,11 @@ namespace ILCompiler.DependencyAnalysis
             _stringType = context.GetWellKnownType(WellKnownType.String);
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__Str_"u8).Append(nameMangler.GetMangledStringName(_data));
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append("__Str_"u8);
+            sb.Append(nameMangler.GetMangledStringName(_data));
         }
 
         protected override int ContentSize => _stringType.Context.Target.PointerSize + sizeof(int) + (_data.Length + 1) * sizeof(char);

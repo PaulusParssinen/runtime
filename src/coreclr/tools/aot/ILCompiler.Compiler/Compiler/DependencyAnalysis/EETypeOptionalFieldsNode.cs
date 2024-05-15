@@ -24,10 +24,10 @@ namespace ILCompiler.DependencyAnalysis
 
         public override bool StaticDependenciesAreComputed => true;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("__optionalfields_"u8);
-            _owner.AppendMangledName(nameMangler, sb);
+            _owner.AppendMangledName(nameMangler, ref sb);
         }
         public int Offset => 0;
         public override bool IsShareable => true;

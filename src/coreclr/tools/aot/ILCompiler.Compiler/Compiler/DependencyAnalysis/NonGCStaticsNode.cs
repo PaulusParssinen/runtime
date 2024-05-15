@@ -52,7 +52,7 @@ namespace ILCompiler.DependencyAnalysis
             return nameMangler.NodeMangler.NonGCStatics(type);
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.NodeMangler.NonGCStatics(_type));
         }

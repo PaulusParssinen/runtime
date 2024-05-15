@@ -30,11 +30,12 @@ namespace ILCompiler.DependencyAnalysis
             _data = data;
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__FrozenObj_"u8)
-                .Append(nameMangler.GetMangledTypeName(_owningType))
-                .Append(_allocationSiteId.ToStringInvariant());
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append("__FrozenObj_"u8);
+            sb.Append(nameMangler.GetMangledTypeName(_owningType));
+            sb.Append(_allocationSiteId.ToStringInvariant());
         }
 
         public override TypeDesc ObjectType => _data.Type;

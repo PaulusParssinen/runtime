@@ -30,10 +30,15 @@ namespace ILCompiler.DependencyAnalysis
             _isAddressTaken = addressTaken;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            string prefix = $"__fat{(_isUnboxingStub ? "unbox" : "")}{(_isAddressTaken ? "addresstaken" : "")}pointer_";
-            sb.Append(prefix).Append(nameMangler.GetMangledMethodName(Method));
+            sb.Append("__fat"u8);
+            if (_isUnboxingStub)
+                sb.Append("unbox"u8);
+            if (_isAddressTaken)
+                sb.Append("addresstaken"u8);
+            sb.Append("pointer_"u8);
+            sb.Append(nameMangler.GetMangledMethodName(Method));
         }
 
         int ISymbolDefinitionNode.Offset => 0;

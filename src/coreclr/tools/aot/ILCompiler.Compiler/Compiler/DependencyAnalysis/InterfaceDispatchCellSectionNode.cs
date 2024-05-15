@@ -85,8 +85,12 @@ namespace ILCompiler.DependencyAnalysis
             return builder.ToObjectData();
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
-            => sb.Append(nameMangler.CompilationUnitPrefix).Append("__InterfaceDispatchCellSection_Start"u8);
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
+        {
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append("__InterfaceDispatchCellSection_Start"u8);
+        }
+
         protected override ObjectNodeSection GetDehydratedSection(NodeFactory factory) => ObjectNodeSection.DataSection;
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
