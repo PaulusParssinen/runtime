@@ -39,9 +39,10 @@ namespace ILCompiler.DependencyAnalysis
 
         public override bool StaticDependenciesAreComputed => true;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__GCStaticEEType_"u8).Append(_gcMap.ToString());
+            sb.Append("__GCStaticEEType_"u8);
+            sb.Append(_gcMap.ToString());
         }
 
         int ISymbolDefinitionNode.Offset

@@ -26,9 +26,10 @@ namespace ILCompiler.DependencyAnalysis
             _gvmImplementations = new Dictionary<MethodDesc, Dictionary<TypeDesc, MethodDesc>>();
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__gvm_table"u8);
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append("__gvm_table"u8);
         }
 
         int INodeWithSize.Size => _size.Value;

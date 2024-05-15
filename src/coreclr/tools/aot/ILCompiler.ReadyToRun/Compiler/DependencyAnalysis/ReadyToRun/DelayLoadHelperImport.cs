@@ -37,7 +37,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             _delayLoadHelper = factory.ImportThunk(helper, importSectionNode, useVirtualCall, useJumpableStub);
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("DelayLoadHelperImport("u8);
             if (_useVirtualCall)
@@ -50,7 +50,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             }
             sb.Append(_helper.ToString());
             sb.Append(") -> "u8);
-            ImportSignature.AppendMangledName(nameMangler, sb);
+            ImportSignature.AppendMangledName(nameMangler, ref sb);
             if (CallingMethod != null)
             {
                 sb.Append(" @ "u8);

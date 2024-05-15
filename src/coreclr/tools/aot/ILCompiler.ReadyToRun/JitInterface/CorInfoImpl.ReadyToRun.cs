@@ -93,7 +93,7 @@ namespace Internal.JitInterface
             return Field == fieldWithToken.Field && Token.Equals(fieldWithToken.Token);
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.GetMangledFieldName(Field));
             sb.Append("; "u8);
@@ -331,7 +331,7 @@ namespace Internal.JitInterface
             return equals;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.GetMangledMethodName(Method));
             if (ConstrainedType != null)
@@ -431,7 +431,7 @@ namespace Internal.JitInterface
 
         public override int GetHashCode() => Context.GetHashCode();
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             if (Context is MethodDesc contextAsMethod)
             {

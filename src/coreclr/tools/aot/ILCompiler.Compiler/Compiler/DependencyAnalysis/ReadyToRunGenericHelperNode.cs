@@ -196,11 +196,11 @@ namespace ILCompiler.DependencyAnalysis
         {
             if (_id != ReadyToRunHelperId.DelegateCtor)
             {
-                _lookupSignature.AppendMangledName(nameMangler, sb);
+                _lookupSignature.AppendMangledName(nameMangler, ref sb);
             }
             else
             {
-                ((DelegateCreationInfo)_target).AppendMangledName(nameMangler, sb);
+                ((DelegateCreationInfo)_target).AppendMangledName(nameMangler, ref sb);
             }
         }
 
@@ -334,7 +334,7 @@ namespace ILCompiler.DependencyAnalysis
         {
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             Utf8String mangledContextName;
             if (_dictionaryOwner is MethodDesc)
@@ -342,7 +342,9 @@ namespace ILCompiler.DependencyAnalysis
             else
                 mangledContextName = nameMangler.GetMangledTypeName((TypeDesc)_dictionaryOwner);
 
-            sb.Append("__GenericLookupFromDict_"u8).Append(mangledContextName).Append("_"u8);
+            sb.Append("__GenericLookupFromDict_"u8);
+            sb.Append(mangledContextName);
+            sb.Append('_');
             AppendLookupSignatureMangledName(nameMangler, sb);
         }
 
@@ -356,7 +358,7 @@ namespace ILCompiler.DependencyAnalysis
         {
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             Utf8String mangledContextName;
             if (_dictionaryOwner is MethodDesc)
@@ -364,7 +366,9 @@ namespace ILCompiler.DependencyAnalysis
             else
                 mangledContextName = nameMangler.GetMangledTypeName((TypeDesc)_dictionaryOwner);
 
-            sb.Append("__GenericLookupFromType_"u8).Append(mangledContextName).Append("_"u8);
+            sb.Append("__GenericLookupFromType_"u8);
+            sb.Append(mangledContextName);
+            sb.Append('_');
             AppendLookupSignatureMangledName(nameMangler, sb);
         }
 

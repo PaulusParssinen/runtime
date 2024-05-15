@@ -31,9 +31,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override bool StaticDependenciesAreComputed => _methodColdCode != null;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__coldcode_" + nameMangler.GetMangledMethodName(_owningMethod));
+            sb.Append("__coldcode_"u8);
+            sb.Append(nameMangler.GetMangledMethodName(_owningMethod));
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

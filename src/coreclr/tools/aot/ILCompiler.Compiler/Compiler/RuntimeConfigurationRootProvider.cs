@@ -49,7 +49,7 @@ namespace ILCompiler
 
             public override bool StaticDependenciesAreComputed => true;
 
-            public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+            public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
             {
                 sb.Append(nameMangler.NodeMangler.ExternVariable(_blobName));
             }

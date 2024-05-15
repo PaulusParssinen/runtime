@@ -23,7 +23,7 @@ namespace ILCompiler.DependencyAnalysis
             _details = details;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("__GenericVariance"u8);
 

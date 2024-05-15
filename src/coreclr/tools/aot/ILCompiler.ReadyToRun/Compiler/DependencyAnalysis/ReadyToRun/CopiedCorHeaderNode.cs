@@ -47,7 +47,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return new DirectoryEntry(rva, size);
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             if (_module != null)

@@ -16,7 +16,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 {
     public abstract class HeaderTableNode : ObjectNode, ISymbolDefinitionNode
     {
-        public abstract void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb);
+        public abstract void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb);
 
         public int Offset => 0;
 
@@ -63,7 +63,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         protected abstract string ModuleSpecificName { get; }
 
-        public sealed override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public sealed override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             if (_module != null)
@@ -123,9 +123,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
-        protected abstract void AppendMangledHeaderName(NameMangler nameMangler, Utf8StringBuilder sb);
+        protected abstract void AppendMangledHeaderName(NameMangler nameMangler, ref Utf8StringBuilder sb);
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb) => AppendMangledHeaderName(nameMangler, sb);
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb) => AppendMangledHeaderName(nameMangler, ref sb);
 
         public override bool StaticDependenciesAreComputed => true;
 
@@ -217,7 +217,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         {
         }
 
-        protected override void AppendMangledHeaderName(NameMangler nameMangler, Utf8StringBuilder sb)
+        protected override void AppendMangledHeaderName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__ReadyToRunHeader"u8);
@@ -255,7 +255,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return _index - ((AssemblyHeaderNode)other)._index;
         }
 
-        protected override void AppendMangledHeaderName(NameMangler nameMangler, Utf8StringBuilder sb)
+        protected override void AppendMangledHeaderName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__ReadyToRunAssemblyHeader__"u8);

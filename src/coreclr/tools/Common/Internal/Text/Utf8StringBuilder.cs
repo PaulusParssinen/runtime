@@ -4,95 +4,138 @@
 using System;
 using System.Text;
 using System.Diagnostics;
+using System.Buffers;
+using System.Runtime.CompilerServices;
+using System.Text.Unicode;
 
 namespace Internal.Text
 {
-    public class Utf8StringBuilder
+    public ref struct Utf8StringBuilder
     {
-        private byte[] _buffer = Array.Empty<byte>();
-        private int _length;
+        private byte[] _arrayToReturnToPool;
+        private Span<byte> _bytes;
+        private int _pos;
 
-        public Utf8StringBuilder()
+        public Utf8StringBuilder(Span<byte> initialBuffer)
         {
+            _arrayToReturnToPool = null;
+            _bytes = initialBuffer;
+            _pos = 0;
         }
 
-        public int Length => _length;
-
-        public ReadOnlySpan<byte> AsSpan() => _buffer.AsSpan(0, _length);
-
-        public Utf8StringBuilder Clear()
+        public Utf8StringBuilder(int initialCapacity)
         {
-            _length = 0;
-            return this;
+            _arrayToReturnToPool = ArrayPool<byte>.Shared.Rent(initialCapacity);
+            _bytes = _arrayToReturnToPool;
+            _pos = 0;
         }
 
-        public Utf8StringBuilder Truncate(int newLength)
+        public readonly int Length => _pos;
+
+        public readonly ReadOnlySpan<byte> AsSpan() => _bytes.Slice(0, _pos);
+
+        public void Clear()
         {
-            Debug.Assert(newLength <= _length);
-            _length = newLength;
-            return this;
+            _pos = 0;
         }
 
-        public Utf8StringBuilder Append(Utf8String value)
+        public void Truncate(int newLength)
         {
-            return Append(value.AsSpan());
+            Debug.Assert(newLength <= _pos);
+            _pos = newLength;
         }
 
-        public Utf8StringBuilder Append(ReadOnlySpan<byte> value)
+        public void Append(Utf8String value)
         {
-            Ensure(value.Length);
-            value.CopyTo(_buffer.AsSpan(_length));
-            _length += value.Length;
-            return this;
+            Append(value.AsSpan());
         }
 
-        public Utf8StringBuilder Append(char value)
+        public void Append(scoped ReadOnlySpan<byte> value)
+        {
+            EnsureCapacity(value.Length);
+
+            value.CopyTo(_bytes.Slice(_pos));
+            _pos += value.Length;
+        }
+
+        public void Append(char value)
         {
             Debug.Assert(Ascii.IsValid(value));
 
-            Ensure(1);
-            _buffer[_length++] = (byte)value;
-            return this;
+            EnsureCapacity(1);
+            _bytes[_pos++] = (byte)value;
         }
 
-        public Utf8StringBuilder Append(string value)
+        public void Append(string value)
         {
             int length = Encoding.UTF8.GetByteCount(value);
-            Ensure(length);
+            EnsureCapacity(length);
 
-            Encoding.UTF8.GetBytes(value, _buffer.AsSpan(_length));
-            _length += length;
-
-            return this;
+            Encoding.UTF8.GetBytes(value, _bytes.Slice(_pos));
+            _pos += length;
         }
 
-        public override string ToString()
+        public override readonly string ToString()
         {
-            return Encoding.UTF8.GetString(_buffer, 0, _length);
+            return Encoding.UTF8.GetString(AsSpan());
         }
 
-        public string ToString(int start)
-        {
-            return Encoding.UTF8.GetString(_buffer, start, _length - start);
-        }
-
-        public Utf8String ToUtf8String()
+        public readonly Utf8String ToUtf8String()
         {
             return new Utf8String(AsSpan().ToArray());
         }
 
-        private void Ensure(int extraSpace)
+        private void EnsureCapacity(int extraSpace)
         {
-            if ((uint)(_length + extraSpace) > (uint)_buffer.Length)
+            if ((uint)(_pos + extraSpace) > (uint)_bytes.Length)
                 Grow(extraSpace);
         }
 
-        private void Grow(int extraSpace)
+        /// <summary>
+        /// Resize the internal buffer either by doubling current buffer size or
+        /// by adding <paramref name="additionalCapacityBeyondPos"/> to
+        /// <see cref="_pos"/> whichever is greater.
+        /// </summary>
+        /// <param name="additionalCapacityBeyondPos">
+        /// Number of bytes requested beyond current position.
+        /// </param>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void Grow(int additionalCapacityBeyondPos)
         {
-            int newSize = Math.Max(2 * _buffer.Length, _length + extraSpace);
-            byte[] newBuffer = new byte[newSize];
-            AsSpan().CopyTo(newBuffer);
-            _buffer = newBuffer;
+            Debug.Assert(additionalCapacityBeyondPos > 0);
+            Debug.Assert(_pos > _bytes.Length - additionalCapacityBeyondPos, "Grow called incorrectly, no resize is needed.");
+
+            const uint ArrayMaxLength = 0x7FFFFFC7; // same as Array.MaxLength
+
+            // Increase to at least the required size (_pos + additionalCapacityBeyondPos), but try
+            // to double the size if possible, bounding the doubling to not go beyond the max array length.
+            int newCapacity = (int)Math.Max(
+                (uint)(_pos + additionalCapacityBeyondPos),
+                Math.Min((uint)_bytes.Length * 2, ArrayMaxLength));
+
+            // Make sure to let Rent throw an exception if the caller has a bug and the desired capacity is negative.
+            // This could also go negative if the actual required length wraps around.
+            byte[] poolArray = ArrayPool<byte>.Shared.Rent(newCapacity);
+
+            _bytes.Slice(0, _pos).CopyTo(poolArray);
+
+            byte[] toReturn = _arrayToReturnToPool;
+            _bytes = _arrayToReturnToPool = poolArray;
+            if (toReturn != null)
+            {
+                ArrayPool<byte>.Shared.Return(toReturn);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose()
+        {
+            byte[] toReturn = _arrayToReturnToPool;
+            this = default; // for safety, to avoid using pooled array if this instance is erroneously appended to again
+            if (toReturn != null)
+            {
+                ArrayPool<byte>.Shared.Return(toReturn);
+            }
         }
     }
 }

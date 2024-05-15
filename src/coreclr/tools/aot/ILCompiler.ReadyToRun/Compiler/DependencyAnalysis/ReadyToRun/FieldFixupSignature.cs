@@ -73,11 +73,11 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return dataBuilder.ToObjectData();
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append($@"FieldFixupSignature({_fixupKind.ToString()}): ");
-            _fieldWithToken.AppendMangledName(nameMangler, sb);
+            _fieldWithToken.AppendMangledName(nameMangler, ref sb);
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

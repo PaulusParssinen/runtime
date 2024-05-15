@@ -29,7 +29,7 @@ namespace ILCompiler.DependencyAnalysis
             _identityPrefix = identityPrefix;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             Utf8String identityString;
             if (_identity is MethodDesc)
@@ -50,7 +50,9 @@ namespace ILCompiler.DependencyAnalysis
                 identityString = new Utf8String("unknown");
             }
 
-            sb.Append(nameMangler.CompilationUnitPrefix).Append(_identityPrefix).Append(identityString);
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append(_identityPrefix);
+            sb.Append(identityString);
         }
 
         public int Offset => 0;

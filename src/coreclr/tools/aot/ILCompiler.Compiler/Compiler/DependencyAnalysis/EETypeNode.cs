@@ -254,7 +254,7 @@ namespace ILCompiler.DependencyAnalysis
             return nameMangler.NodeMangler.MethodTable(type);
         }
 
-        public virtual void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.NodeMangler.MethodTable(_type));
         }
@@ -1507,8 +1507,13 @@ namespace ILCompiler.DependencyAnalysis
                 : ObjectNodeSection.BssSection;
 
             public override bool StaticDependenciesAreComputed => true;
-            public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
-                => sb.Append("__writableData"u8).Append(nameMangler.GetMangledTypeName(_type.Type));
+
+            public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
+            {
+                sb.Append("__writableData"u8);
+                sb.Append(nameMangler.GetMangledTypeName(_type.Type));
+            }
+
             public int Offset => 0;
             public override bool IsShareable => true;
             public override bool ShouldSkipEmittingObjectNode(NodeFactory factory) => _type.ShouldSkipEmittingObjectNode(factory);

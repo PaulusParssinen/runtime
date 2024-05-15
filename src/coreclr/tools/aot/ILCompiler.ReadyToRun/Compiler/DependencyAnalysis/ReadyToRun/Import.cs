@@ -35,8 +35,8 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         protected override string GetName(NodeFactory factory)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            AppendMangledName(factory.NameMangler, sb);
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            AppendMangledName(factory.NameMangler, ref sb);
             return sb.ToString();
         }
 
@@ -51,11 +51,11 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             dataBuilder.EmitZeroPointer();
         }
 
-        public virtual void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(Table.Name);
             sb.Append("->"u8);
-            ImportSignature.AppendMangledName(nameMangler, sb);
+            ImportSignature.AppendMangledName(nameMangler, ref sb);
         }
 
         public override bool StaticDependenciesAreComputed => true;

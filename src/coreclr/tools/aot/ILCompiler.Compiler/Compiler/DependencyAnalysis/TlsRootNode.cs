@@ -7,9 +7,10 @@ namespace ILCompiler.DependencyAnalysis
 {
     public class TlsRootNode : ObjectNode, ISymbolDefinitionNode
     {
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("tls_InlinedThreadStatics"u8);
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append("tls_InlinedThreadStatics"u8);
         }
         public int Offset => 0;
         public override bool IsShareable => false;

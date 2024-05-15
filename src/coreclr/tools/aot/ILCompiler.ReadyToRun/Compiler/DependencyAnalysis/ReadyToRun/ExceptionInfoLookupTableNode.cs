@@ -40,7 +40,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public int Count => _ehInfoBuilder.Count;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             // EH info node is a singleton in the R2R PE file
             sb.Append("EHInfoNode"u8);
@@ -53,8 +53,8 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         protected override string GetName(NodeFactory context)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            AppendMangledName(context.NameMangler, sb);
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            AppendMangledName(context.NameMangler, ref sb);
             return sb.ToString();
         }
     }
@@ -74,7 +74,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             _ehInfoNode = new EHInfoNode();
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__ReadyToRunExceptionInfoLookupTable@"u8);

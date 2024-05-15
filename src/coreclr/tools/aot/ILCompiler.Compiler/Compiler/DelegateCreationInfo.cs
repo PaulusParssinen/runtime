@@ -304,12 +304,12 @@ namespace ILCompiler
             }
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("__DelegateCtor_"u8);
             if (TargetNeedsVTableLookup)
                 sb.Append("FromVtbl_"u8);
-            Constructor.AppendMangledName(nameMangler, sb);
+            Constructor.AppendMangledName(nameMangler, ref sb);
             sb.Append("__"u8);
             sb.Append(nameMangler.GetMangledMethodName(_targetMethod));
             if (_constrainedType != null)
@@ -320,7 +320,7 @@ namespace ILCompiler
             if (Thunk != null)
             {
                 sb.Append("__"u8);
-                Thunk.AppendMangledName(nameMangler, sb);
+                Thunk.AppendMangledName(nameMangler, ref sb);
             }
         }
 

@@ -46,10 +46,16 @@ namespace ILCompiler.DependencyAnalysis
 
         int ISymbolDefinitionNode.Offset => OffsetFromBeginningOfArray;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            string mangledName = _type == null ? "_inlinedThreadStatics" : GetMangledName(_type, nameMangler);
-            sb.Append(mangledName);
+            if (_type == null)
+            {
+                sb.Append("_inlinedThreadStatics"u8);
+            }
+            else
+            {
+                sb.Append(GetMangledName(_type, nameMangler));
+            }
         }
 
         private ISymbolNode GetGCStaticEETypeNode(NodeFactory factory)

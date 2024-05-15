@@ -23,9 +23,10 @@ namespace ILCompiler.DependencyAnalysis
 
         int INodeWithSize.Size => _size.Value;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__type_to_cctorContext_map"u8);
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append("__type_to_cctorContext_map"u8);
         }
         public int Offset => 0;
 

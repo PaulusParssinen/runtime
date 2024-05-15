@@ -25,11 +25,11 @@ namespace ILCompiler.DependencyAnalysis
             _targetMethod = targetMethod;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix)
-              .Append("__RuntimeMethodHandle_"u8)
-              .Append(nameMangler.GetMangledMethodName(_targetMethod));
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append("__RuntimeMethodHandle_"u8);
+            sb.Append(nameMangler.GetMangledMethodName(_targetMethod));
         }
         public int Offset => 0;
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

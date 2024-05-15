@@ -22,9 +22,10 @@ namespace ILCompiler.DependencyAnalysis
             _externalReferences = externalReferences;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__generic_types_hashtable"u8);
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append("__generic_types_hashtable"u8);
         }
 
         int INodeWithSize.Size => _size.Value;
