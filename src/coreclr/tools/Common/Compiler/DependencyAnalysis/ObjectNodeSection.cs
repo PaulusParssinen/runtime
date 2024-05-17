@@ -1,6 +1,8 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Internal.Text;
+
 namespace ILCompiler.DependencyAnalysis
 {
     public enum SectionType
@@ -18,18 +20,18 @@ namespace ILCompiler.DependencyAnalysis
     /// </summary>
     public class ObjectNodeSection
     {
-        public string Name { get; }
+        public Utf8String Name { get; }
         public SectionType Type { get; }
-        public string ComdatName { get; }
+        public Utf8String ComdatName { get; }
 
-        public ObjectNodeSection(string name, SectionType type, string comdatName)
+        public ObjectNodeSection(Utf8String name, SectionType type, Utf8String comdatName)
         {
             Name = name;
             Type = type;
             ComdatName = comdatName;
         }
 
-        public ObjectNodeSection(string name, SectionType type) : this(name, type, null)
+        public ObjectNodeSection(string name, SectionType type) : this(new Utf8String(name), type, default)
         { }
 
         /// <summary>

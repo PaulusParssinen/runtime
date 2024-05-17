@@ -7,8 +7,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using ILCompiler.DependencyAnalysis;
-using ILLink.Shared.TrimAnalysis;
+
 using Internal.Text;
 using Internal.TypeSystem;
 using Internal.TypeSystem.Ecma;

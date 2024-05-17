@@ -15,7 +15,6 @@ namespace Internal.Text
         {
             _value = underlyingArray;
         }
-
         public Utf8String(string s)
         {
             _value = Encoding.UTF8.GetBytes(s);
@@ -23,12 +22,7 @@ namespace Internal.Text
 
         public int Length => _value.Length;
 
-        // For now, define implicit conversions between string and Utf8String to aid the transition
-        // These conversions will be removed eventually
-        //public static implicit operator Utf8String(string s)
-        //{
-        //    return new Utf8String(s);
-        //}
+        public byte this[int index] => _value[index];
 
         public ReadOnlySpan<byte> AsSpan() => _value;
 
@@ -38,11 +32,17 @@ namespace Internal.Text
         }
 
         public override bool Equals(object obj)
-        {
-            return (obj is Utf8String utf8String) && Equals(utf8String);
-        }
+            => obj is Utf8String utf8String && Equals(utf8String);
 
         public override unsafe int GetHashCode() => GetHashCode(_value);
+
+        public bool Equals(Utf8String other) => Equals(other.AsSpan());
+        public bool Equals(ReadOnlySpan<byte> other) => AsSpan().SequenceEqual(other);
+
+        public int CompareTo(Utf8String other) => Compare(this, other);
+
+        public static bool operator ==(Utf8String left, Utf8String right) => left.Equals(right);
+        public static bool operator !=(Utf8String left, Utf8String right) => !(left == right);
 
         public static unsafe int GetHashCode(ReadOnlySpan<byte> utf8StringSpan)
         {
@@ -72,19 +72,10 @@ namespace Internal.Text
             }
         }
 
-        public bool Equals(Utf8String other)
-        {
-            return AsSpan().SequenceEqual(other.AsSpan());
-        }
-
         private static int Compare(Utf8String strA, Utf8String strB)
         {
             return strA.AsSpan().SequenceCompareTo(strB.AsSpan());
         }
 
-        public int CompareTo(Utf8String other)
-        {
-            return Compare(this, other);
-        }
     }
 }
