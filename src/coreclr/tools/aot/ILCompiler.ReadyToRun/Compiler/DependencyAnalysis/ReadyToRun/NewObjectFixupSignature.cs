@@ -42,7 +42,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("NewObjectSignature: "u8);
-            sb.Append(nameMangler.GetMangledTypeName(_typeDesc));
+            nameMangler.AppendMangledTypeName(_typeDesc, ref sb);
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

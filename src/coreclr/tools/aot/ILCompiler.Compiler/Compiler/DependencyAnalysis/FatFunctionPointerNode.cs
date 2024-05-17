@@ -38,7 +38,7 @@ namespace ILCompiler.DependencyAnalysis
             if (_isAddressTaken)
                 sb.Append("addresstaken"u8);
             sb.Append("pointer_"u8);
-            sb.Append(nameMangler.GetMangledMethodName(Method));
+            nameMangler.AppendMangledMethodName(Method, ref sb);
         }
 
         int ISymbolDefinitionNode.Offset => 0;

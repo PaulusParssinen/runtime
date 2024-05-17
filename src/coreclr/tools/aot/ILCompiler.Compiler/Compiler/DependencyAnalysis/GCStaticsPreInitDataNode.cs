@@ -24,20 +24,16 @@ namespace ILCompiler.DependencyAnalysis
             _preinitializationInfo = preinitializationInfo;
         }
 
-        protected override string GetName(NodeFactory factory) => GetMangledName(_preinitializationInfo.Type, factory.NameMangler);
+        protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(GetMangledName(_preinitializationInfo.Type, nameMangler));
+            nameMangler.NodeMangler.AppendGCStatics(_preinitializationInfo.Type, ref sb);
+            sb.Append("__PreInitData"u8);
         }
 
         public int Offset => 0;
         public MetadataType Type => _preinitializationInfo.Type;
-
-        public static string GetMangledName(TypeDesc type, NameMangler nameMangler)
-        {
-            return nameMangler.NodeMangler.GCStatics(type) + "__PreInitData";
-        }
 
         public override bool StaticDependenciesAreComputed => true;
 

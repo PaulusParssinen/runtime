@@ -64,7 +64,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             sb.Append($@"VirtualResolutionFixupSignature({_fixupKind.ToString()}): ");
             _declMethod.AppendMangledName(nameMangler, ref sb);
             sb.Append(':');
-            sb.Append(nameMangler.GetMangledTypeName(_implType));
+            nameMangler.AppendMangledTypeName(_implType, ref sb);
             sb.Append(':');
             if (_implMethod == null)
                 sb.Append("(null)"u8);

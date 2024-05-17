@@ -37,11 +37,6 @@ namespace ILCompiler.DependencyAnalysis
             factory.ThreadStaticsRegion.AddEmbeddedObject(this);
         }
 
-        public static string GetMangledName(TypeDesc type, NameMangler nameMangler)
-        {
-            return nameMangler.NodeMangler.ThreadStatics(type);
-        }
-
         int ISymbolNode.Offset => 0;
 
         int ISymbolDefinitionNode.Offset => OffsetFromBeginningOfArray;
@@ -54,7 +49,7 @@ namespace ILCompiler.DependencyAnalysis
             }
             else
             {
-                sb.Append(GetMangledName(_type, nameMangler));
+                nameMangler.NodeMangler.AppendThreadStatics(_type, ref sb);
             }
         }
 

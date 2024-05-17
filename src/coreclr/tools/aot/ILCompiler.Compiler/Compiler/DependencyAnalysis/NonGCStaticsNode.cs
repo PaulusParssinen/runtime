@@ -49,12 +49,14 @@ namespace ILCompiler.DependencyAnalysis
 
         public static string GetMangledName(TypeDesc type, NameMangler nameMangler)
         {
-            return nameMangler.NodeMangler.NonGCStatics(type);
+            using var sb = new Utf8StringBuilder(stackalloc byte[256]);
+            nameMangler.NodeMangler.AppendNonGCStatics(type, ref sb);
+            return sb.ToString();
         }
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.NodeMangler.NonGCStatics(_type));
+            nameMangler.NodeMangler.AppendNonGCStatics(_type, ref sb);
         }
 
         int ISymbolNode.Offset => 0;

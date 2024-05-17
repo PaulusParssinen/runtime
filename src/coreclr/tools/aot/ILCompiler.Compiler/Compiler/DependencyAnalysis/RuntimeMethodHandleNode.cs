@@ -29,7 +29,7 @@ namespace ILCompiler.DependencyAnalysis
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__RuntimeMethodHandle_"u8);
-            sb.Append(nameMangler.GetMangledMethodName(_targetMethod));
+            nameMangler.AppendMangledMethodName(_targetMethod, ref sb);
         }
         public int Offset => 0;
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

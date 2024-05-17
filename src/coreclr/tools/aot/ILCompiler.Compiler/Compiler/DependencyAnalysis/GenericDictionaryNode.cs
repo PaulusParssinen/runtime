@@ -98,7 +98,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.NodeMangler.TypeGenericDictionary(_owningType));
+            nameMangler.NodeMangler.AppendTypeGenericDictionary(_owningType, ref sb);
         }
 
         protected override int HeaderSize => 0;
@@ -188,7 +188,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.NodeMangler.MethodGenericDictionary(_owningMethod));
+            nameMangler.NodeMangler.AppendMethodGenericDictionary(_owningMethod, ref sb);
         }
         protected override int HeaderSize => _owningMethod.Context.Target.PointerSize;
         public override Instantiation TypeInstantiation => _owningMethod.OwningType.Instantiation;

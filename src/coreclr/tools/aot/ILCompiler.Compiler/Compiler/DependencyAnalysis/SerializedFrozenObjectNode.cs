@@ -34,8 +34,8 @@ namespace ILCompiler.DependencyAnalysis
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__FrozenObj_"u8);
-            sb.Append(nameMangler.GetMangledTypeName(_owningType));
-            sb.Append(_allocationSiteId.ToStringInvariant());
+            nameMangler.AppendMangledTypeName(_owningType, ref sb);
+            sb.AppendInvariant(_allocationSiteId);
         }
 
         public override TypeDesc ObjectType => _data.Type;

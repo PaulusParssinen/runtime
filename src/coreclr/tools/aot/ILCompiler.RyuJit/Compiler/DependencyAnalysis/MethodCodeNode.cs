@@ -59,7 +59,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.GetMangledMethodName(_method));
+            nameMangler.AppendMangledMethodName(_method, ref sb);
         }
         public int Offset => 0;
         public override bool IsShareable => _method is InstantiatedMethod || EETypeNode.IsTypeNodeShareable(_method.OwningType);

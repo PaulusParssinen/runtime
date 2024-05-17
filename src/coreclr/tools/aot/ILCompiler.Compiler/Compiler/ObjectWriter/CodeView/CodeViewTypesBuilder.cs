@@ -11,6 +11,7 @@ using System.Text;
 
 using ILCompiler.DependencyAnalysis;
 using Internal.JitInterface;
+using Internal.Text;
 using Internal.TypeSystem;
 using Internal.TypeSystem.TypesDebugInfo;
 
@@ -448,6 +449,13 @@ namespace ILCompiler.ObjectWriter
             {
                 int byteCount = Encoding.UTF8.GetByteCount(value) + 1;
                 Encoding.UTF8.GetBytes(value, _bufferWriter.GetSpan(byteCount));
+                _bufferWriter.Advance(byteCount);
+            }
+
+            public void Write(Utf8String value)
+            {
+                int byteCount = value.Length + 1;
+                value.AsSpan().CopyTo(_bufferWriter.GetSpan(byteCount));
                 _bufferWriter.Advance(byteCount);
             }
 

@@ -311,11 +311,11 @@ namespace ILCompiler
                 sb.Append("FromVtbl_"u8);
             Constructor.AppendMangledName(nameMangler, ref sb);
             sb.Append("__"u8);
-            sb.Append(nameMangler.GetMangledMethodName(_targetMethod));
+            nameMangler.AppendMangledMethodName(_targetMethod, ref sb);
             if (_constrainedType != null)
             {
                 sb.Append("__"u8);
-                nameMangler.GetMangledTypeName(_constrainedType);
+                nameMangler.AppendMangledTypeName(_constrainedType, ref sb);
             }
             if (Thunk != null)
             {

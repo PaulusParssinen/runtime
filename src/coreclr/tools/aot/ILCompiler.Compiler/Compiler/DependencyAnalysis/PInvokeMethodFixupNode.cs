@@ -239,7 +239,8 @@ namespace ILCompiler.DependencyAnalysis
             }
             if (SignatureBytes >= 0)
             {
-                sb.Append($"@{SignatureBytes}");
+                sb.Append('@');
+                sb.AppendInvariant(SignatureBytes);
             }
         }
     }

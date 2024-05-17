@@ -95,7 +95,7 @@ namespace Internal.JitInterface
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.GetMangledFieldName(Field));
+            nameMangler.AppendMangledFieldName(Field, ref sb);
             sb.Append("; "u8);
             sb.Append(Token.ToString());
         }
@@ -333,18 +333,18 @@ namespace Internal.JitInterface
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.GetMangledMethodName(Method));
+            nameMangler.AppendMangledMethodName(Method, ref sb);
             if (ConstrainedType != null)
             {
                 sb.Append(" @ "u8);
-                sb.Append(nameMangler.GetMangledTypeName(ConstrainedType));
+                nameMangler.AppendMangledTypeName(ConstrainedType, ref sb);
             }
             sb.Append("; "u8);
             sb.Append(Token.ToString());
             if (OwningTypeNotDerivedFromToken)
             {
                 sb.Append("; OWNINGTYPE"u8);
-                sb.Append(nameMangler.GetMangledTypeName(OwningType));
+                nameMangler.AppendMangledTypeName(OwningType, ref sb);
                 sb.Append("; "u8);
             }
             if (Unboxing)
@@ -435,11 +435,11 @@ namespace Internal.JitInterface
         {
             if (Context is MethodDesc contextAsMethod)
             {
-                sb.Append(nameMangler.GetMangledMethodName(contextAsMethod));
+                nameMangler.AppendMangledMethodName(contextAsMethod, ref sb);
             }
             else
             {
-                sb.Append(nameMangler.GetMangledTypeName(ContextType));
+                nameMangler.AppendMangledTypeName(ContextType, ref sb);
             }
         }
     }

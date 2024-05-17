@@ -11,6 +11,7 @@ using Internal.TypeSystem.Ecma;
 using Internal.TypeSystem.TypesDebugInfo;
 
 using ILCompiler.DependencyAnalysis;
+using Internal.Text;
 
 namespace ILCompiler
 {
@@ -585,9 +586,6 @@ namespace ILCompiler
             List<DataFieldDescriptor> threadStaticFields = new List<DataFieldDescriptor>();
             List<StaticDataFieldDescriptor> staticsDescs = new List<StaticDataFieldDescriptor>();
 
-            string nonGcStaticDataName = NodeFactory.NameMangler.NodeMangler.NonGCStatics(type);
-            string gcStaticDataName = NodeFactory.NameMangler.NodeMangler.GCStatics(type);
-            string threadStaticDataName = NodeFactory.NameMangler.NodeMangler.ThreadStatics(type);
             bool isNativeAOT = Abi == TargetAbi.NativeAot;
 
             bool hasNonGcStatics = NodeFactory.MetadataManager.HasNonGcStaticBase(defType);
@@ -596,6 +594,8 @@ namespace ILCompiler
             bool hasInstanceFields = defType.IsValueType || NodeFactory.MetadataManager.HasConstructedEEType(defType);
 
             bool isCanonical = defType.IsCanonicalSubtype(CanonicalFormKind.Any);
+
+            var staticDataNameBuilder = new Utf8StringBuilder(stackalloc byte[256]);
 
             foreach (var fieldDesc in defType.GetFields())
             {
@@ -680,18 +680,29 @@ namespace ILCompiler
                         // Mark field as static
                         field.Offset = 0xFFFFFFFF;
 
-                        if (fieldDesc.IsThreadStatic) {
-                            staticDesc.StaticDataName = threadStaticDataName;
+                        if (fieldDesc.IsThreadStatic)
+                        {
+                            NodeFactory.NameMangler.NodeMangler.AppendNonGCStatics(type, ref staticDataNameBuilder);
+
+                            staticDesc.StaticDataName = staticDataNameBuilder.ToUtf8String();
                             staticDesc.IsStaticDataInObject = isNativeAOT ? 1 : 0;
-                        } else if (fieldDesc.HasGCStaticBase) {
-                            staticDesc.StaticDataName = gcStaticDataName;
+                        }
+                        else if (fieldDesc.HasGCStaticBase)
+                        {
+                            NodeFactory.NameMangler.NodeMangler.AppendGCStatics(type, ref staticDataNameBuilder);
+
+                            staticDesc.StaticDataName = staticDataNameBuilder.ToUtf8String();
                             staticDesc.IsStaticDataInObject = isNativeAOT ? 1 : 0;
-                        } else {
-                            staticDesc.StaticDataName = nonGcStaticDataName;
+                        }
+                        else
+                        {
+                            NodeFactory.NameMangler.NodeMangler.AppendThreadStatics(type, ref staticDataNameBuilder);
+                            staticDesc.StaticDataName = staticDataNameBuilder.ToUtf8String();
                             staticDesc.IsStaticDataInObject = 0;
                         }
 
                         staticsDescs.Add(staticDesc);
+                        staticDataNameBuilder.Clear();
                     }
 
                     if (fieldDesc.IsThreadStatic)
@@ -706,6 +717,8 @@ namespace ILCompiler
                     fieldsDescs.Add(field);
                 }
             }
+
+            staticDataNameBuilder.Dispose();
 
             if (NodeFactory.Target.OperatingSystem == TargetOS.Windows)
             {

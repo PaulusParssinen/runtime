@@ -7,9 +7,11 @@ using System.Diagnostics;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.Unicode;
+using System.Globalization;
 
 namespace Internal.Text
 {
+    // TODO: Mark this IDisposable when we get ref struct interfaces
     public ref struct Utf8StringBuilder
     {
         private byte[] _arrayToReturnToPool;
@@ -33,6 +35,8 @@ namespace Internal.Text
         public readonly int Length => _pos;
 
         public readonly ReadOnlySpan<byte> AsSpan() => _bytes.Slice(0, _pos);
+        public readonly ReadOnlySpan<byte> AsSpan(int start) => _bytes.Slice(start, _pos - start);
+        public readonly ReadOnlySpan<byte> AsSpan(int start, int length) => _bytes.Slice(start, length);
 
         public void Clear()
         {
@@ -66,7 +70,7 @@ namespace Internal.Text
             _bytes[_pos++] = (byte)value;
         }
 
-        public void Append(string value)
+        public void Append(scoped ReadOnlySpan<char> value)
         {
             int length = Encoding.UTF8.GetByteCount(value);
             EnsureCapacity(length);
@@ -75,14 +79,42 @@ namespace Internal.Text
             _pos += length;
         }
 
+        public void AppendInvariant<T>(T value, string format = null)
+            where T : IUtf8SpanFormattable, IFormattable
+        {
+            var invariantCulture = CultureInfo.InvariantCulture;
+            if (value.TryFormat(_bytes.Slice(_pos), out int bytesWritten, format, invariantCulture))
+            {
+                _pos += bytesWritten;
+            }
+            else
+            {
+                Append(value.ToString(format, invariantCulture));
+            }
+        }
+
         public override readonly string ToString()
         {
             return Encoding.UTF8.GetString(AsSpan());
+        }
+        public string ToStringAndDispose()
+        {
+            string value = ToString();
+            Dispose();
+
+            return value;
         }
 
         public readonly Utf8String ToUtf8String()
         {
             return new Utf8String(AsSpan().ToArray());
+        }
+        public Utf8String ToUtf8StringAndDispose()
+        {
+            Utf8String value = ToUtf8String();
+            Dispose();
+
+            return value;
         }
 
         private void EnsureCapacity(int extraSpace)

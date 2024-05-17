@@ -336,14 +336,11 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            Utf8String mangledContextName;
-            if (_dictionaryOwner is MethodDesc)
-                mangledContextName = nameMangler.GetMangledMethodName((MethodDesc)_dictionaryOwner);
-            else
-                mangledContextName = nameMangler.GetMangledTypeName((TypeDesc)_dictionaryOwner);
-
             sb.Append("__GenericLookupFromDict_"u8);
-            sb.Append(mangledContextName);
+            if (_dictionaryOwner is MethodDesc method)
+                nameMangler.AppendMangledMethodName(method, ref sb);
+            else
+                nameMangler.AppendMangledTypeName((TypeDesc)_dictionaryOwner, ref sb);
             sb.Append('_');
             AppendLookupSignatureMangledName(nameMangler, sb);
         }
@@ -360,14 +357,11 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            Utf8String mangledContextName;
-            if (_dictionaryOwner is MethodDesc)
-                mangledContextName = nameMangler.GetMangledMethodName((MethodDesc)_dictionaryOwner);
-            else
-                mangledContextName = nameMangler.GetMangledTypeName((TypeDesc)_dictionaryOwner);
-
             sb.Append("__GenericLookupFromType_"u8);
-            sb.Append(mangledContextName);
+            if (_dictionaryOwner is MethodDesc method)
+                nameMangler.AppendMangledMethodName(method, ref sb);
+            else
+                nameMangler.AppendMangledTypeName((TypeDesc)_dictionaryOwner, ref sb);
             sb.Append('_');
             AppendLookupSignatureMangledName(nameMangler, sb);
         }

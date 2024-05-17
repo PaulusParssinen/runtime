@@ -77,9 +77,9 @@ namespace ILCompiler.DependencyAnalysis
     {
         public static string GetMangledName(this ISymbolNode symbolNode, NameMangler nameMangler)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[512]);
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
             symbolNode.AppendMangledName(nameMangler, ref sb);
-            return sb.ToString();
+            return sb.ToStringAndDispose();
         }
     }
 }

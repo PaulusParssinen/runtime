@@ -49,7 +49,7 @@ namespace ILCompiler.DependencyAnalysis
         public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("_associatedData_"u8);
-            sb.Append(nameMangler.GetMangledMethodName(_methodNode.Method));
+            nameMangler.AppendMangledMethodName(_methodNode.Method, ref sb);
         }
 
         public static bool MethodHasAssociatedData(IMethodNode methodNode)

@@ -286,7 +286,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.GetMangledMethodName(_method));
+            nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 
         protected override string GetName(NodeFactory factory)

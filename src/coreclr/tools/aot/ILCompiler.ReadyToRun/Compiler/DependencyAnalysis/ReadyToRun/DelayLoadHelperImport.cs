@@ -54,7 +54,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             if (CallingMethod != null)
             {
                 sb.Append(" @ "u8);
-                sb.Append(nameMangler.GetMangledMethodName(CallingMethod));
+                nameMangler.AppendMangledMethodName(CallingMethod, ref sb);
             }
         }
 

@@ -35,7 +35,7 @@ namespace ILCompiler.DependencyAnalysis
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__SealedVTable_"u8);
-            sb.Append(nameMangler.NodeMangler.MethodTable(_type));
+            nameMangler.NodeMangler.AppendMethodTable(_type, ref sb);
         }
 
         int ISymbolNode.Offset => 0;

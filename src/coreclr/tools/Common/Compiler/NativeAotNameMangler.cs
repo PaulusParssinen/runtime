@@ -3,13 +3,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-
+using ILCompiler.DependencyAnalysis;
+using ILLink.Shared.TrimAnalysis;
 using Internal.Text;
 using Internal.TypeSystem;
 using Internal.TypeSystem.Ecma;
-using System.Diagnostics;
 
 namespace ILCompiler
 {
@@ -25,162 +27,197 @@ namespace ILCompiler
 
         public override string CompilationUnitPrefix
         {
-            get
-            {
-                Debug.Assert(_compilationUnitPrefix != null);
-                return _compilationUnitPrefix;
-            }
-            set { _compilationUnitPrefix = SanitizeNameWithHash(value); }
+            get => _compilationUnitPrefix;
+            set { _compilationUnitPrefix = GetSanitizedNameWithHash(value); }
         }
 
-        //
-        // Turn a name into a valid C/C++ identifier
-        //
-        public override string SanitizeName(string s, bool typeName = false)
+        /// <summary>
+        /// Turns a name into a valid C/C++ identifier.
+        /// </summary>
+        public override void AppendSanitizedName(ReadOnlySpan<char> s, ref Utf8StringBuilder sb)
         {
-            StringBuilder sb = null;
-            for (int i = 0; i < s.Length; i++)
+            // TODO: SearchValue.Create("A-z0-9").IndexOfAnyExcept fast-path?
+
+            int i = 0;
+            if (s.Length > 0 && char.IsAsciiDigit(s[0]))
             {
-                char c = s[i];
-
-                if (char.IsAsciiLetter(c))
-                {
-                    sb?.Append(c);
-                    continue;
-                }
-
-                if (char.IsAsciiDigit(c))
-                {
-                    // C identifiers cannot start with a digit. Prepend underscores.
-                    if (i == 0)
-                    {
-                        sb ??= new StringBuilder(s.Length + 2);
-                        sb.Append('_');
-                    }
-                    sb?.Append(c);
-                    continue;
-                }
-
-                sb ??= new StringBuilder(s, 0, i, s.Length);
-
-                // Everything else is replaced by underscore.
-                // TODO: We assume that there won't be collisions with our own or C++ built-in identifiers.
+                // C identifiers cannot start with a digit. Prepend underscore.
                 sb.Append('_');
+
+                sb.Append(s[0]);
+                i++;
             }
 
-            string sanitizedName = (sb != null) ? sb.ToString() : s;
+            for (; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (char.IsAsciiLetterOrDigit(c))
+                {
+                    sb.Append(c);
+                }
+                else
+                {
+                    // Everything else is replaced by underscore.
+                    // TODO: We assume that there won't be collisions with our own or C++ built-in identifiers.
+                    sb.Append('_');
+                }
+            }
 
             // The character sequences denoting generic instantiations, arrays, byrefs, or pointers must be
             // restricted to that use only. Replace them if they happened to be used in any identifiers in
             // the compilation input.
-            return sanitizedName;
         }
 
-        private static byte[] GetBytesFromString(string literal)
+        private string GetSanitizedNameWithHash(string literal)
         {
-            byte[] bytes = new byte[checked(literal.Length * 2)];
-            for (int i = 0; i < literal.Length; i++)
-            {
-                int iByteBase = i * 2;
-                char c = literal[i];
-                bytes[iByteBase] = (byte)c;
-                bytes[iByteBase + 1] = (byte)(c >> 8);
-            }
-            return bytes;
+            var sb = new Utf8StringBuilder(stackalloc byte[64]);
+            AppendSanitizedNameWithHash(literal, ref sb);
+            return sb.ToStringAndDispose();
         }
-
-        private string SanitizeNameWithHash(string literal)
+        private void AppendSanitizedNameWithHash(string literal, ref Utf8StringBuilder sb)
         {
-            string mangledName = SanitizeName(literal);
+            // Track the sanitized name length so we can truncate it..
+            int sanitizedNameStart = sb.Length;
 
-            if (mangledName.Length > 30)
-                mangledName = mangledName.Substring(0, 30);
+            AppendSanitizedName(literal, ref sb);
 
-            if (mangledName != literal)
+            int sanitizedNameLength = sb.Length - sanitizedNameStart;
+            if (sanitizedNameLength > 30)
+                sb.Truncate(newLength: sanitizedNameStart + 30);
+
+            // If the name was changed during sanitization, append SHA-256 hash of the original name to the sanitized name
+            if (sb.AsSpan(sanitizedNameStart).SequenceEqual(Encoding.UTF8.GetBytes(literal)))
             {
-                byte[] hash;
-                lock (this)
-                {
-                    // Use SHA256 hash here to provide a high degree of uniqueness to symbol names without requiring them to be long
-                    // This hash function provides an exceedingly high likelihood that no two strings will be given equal symbol names
-                    // This is not considered used for security purpose; however collisions would be highly unfortunate as they will cause compilation
-                    // failure.
-                    hash = SHA256.HashData(GetBytesFromString(literal));
-                }
+                Span<byte> hashBuffer = stackalloc byte[SHA256.HashSizeInBytes];
 
-                mangledName += "_" + Convert.ToHexString(hash);
+                // Use SHA256 hash here to provide a high degree of uniqueness to symbol names without requiring them to be long
+                // This hash function provides an exceedingly high likelihood that no two strings will be given equal symbol names
+                // This is not considered used for security purpose; however collisions would be highly unfortunate as they will cause compilation
+                // failure.
+                bool success = SHA256.TryHashData(MemoryMarshal.AsBytes(literal.AsSpan()), hashBuffer, out _);
+                Debug.Assert(success);
+
+                sb.Append('_');
+                sb.Append(Convert.ToHexString(hashBuffer));
             }
-
-            return mangledName;
         }
 
         /// <summary>
         /// Dictionary given a mangled name for a given <see cref="TypeDesc"/>
         /// </summary>
-        private Dictionary<TypeDesc, string> _mangledTypeNames = new Dictionary<TypeDesc, string>();
+        private readonly Dictionary<TypeDesc, Utf8String> _mangledTypeNames = new Dictionary<TypeDesc, Utf8String>();
 
         /// <summary>
-        /// Given a set of names <param name="set"/> check if <param name="origName"/>
-        /// is unique, if not add a numbered suffix until it becomes unique.
+        /// Given a set of <paramref name="nameCounts"/> check if hash of <paramref name="name"/>
+        /// is unique, if not add a numbered suffix until it becomes unique and append the name to <paramref name="sb"/>.
         /// </summary>
-        /// <param name="origName">Name to check for uniqueness.</param>
-        /// <param name="set">Set of names already used.</param>
-        /// <returns>A name based on <param name="origName"/> that is not part of <param name="set"/>.</returns>
-        private static string DisambiguateName(string origName, HashSet<string> set)
+        /// <remarks>
+        /// The hashing is done with <see cref="Utf8String.GetHashCode(ReadOnlySpan{byte})"/>
+        /// </remarks>
+        /// <param name="name">Name as UTF-8 bytes to disambiguate.</param>
+        /// <param name="nameCounts">The dictionary mapping a hash of name to number of times it has been encountered.</param>
+        /// <param name="sb">The string builder to append the number suffix to.</param>
+        private static void AppendDisambiguatingNameSuffix(ReadOnlySpan<byte> name, Dictionary<int, int> nameCounts, ref Utf8StringBuilder sb)
         {
-            int iter = 0;
-            string result = origName;
-            while (set.Contains(result))
-            {
-                result = string.Concat(origName, "_", (iter++).ToStringInvariant());
-            }
-            return result;
-        }
+            int nameHash = Utf8String.GetHashCode(name);
 
-        public override string GetMangledTypeName(TypeDesc type)
-        {
-            lock (this)
-            {
-                string mangledName;
-                if (_mangledTypeNames.TryGetValue(type, out mangledName))
-                    return mangledName;
+            // Try to insert the name into the deduplication dictionary with default value (0)
+            ref int count = ref CollectionsMarshal.GetValueRefOrAddDefault(nameCounts, nameHash, out bool exists);
 
-                return ComputeMangledTypeName(type);
+            // If the name was in the dictionary we append the zero-based number suffix and increment the count by reference.
+            if (exists)
+            {
+                sb.Append('_');
+                sb.AppendInvariant(count++);
             }
         }
 
-        private const string EnterNameScopeSequence = "<";
-        private const string ExitNameScopeSequence = ">";
-        private const string DelimitNameScopeSequence = ",";
+        private const char EnterNameScopeSequence = '<';
+        private const char ExitNameScopeSequence = '>';
+        private const char DelimitNameScopeSequence = ',';
 
-        protected string NestMangledName(string name)
+        protected void AppendNestedMangledName(string name, ref Utf8StringBuilder sb)
         {
-            return EnterNameScopeSequence + name + ExitNameScopeSequence;
+            sb.Append(EnterNameScopeSequence);
+            sb.Append(name);
+            sb.Append(ExitNameScopeSequence);
+        }
+
+        /// <summary>
+        /// Appends the namespace qualified sanitized name of a <see cref="DefType"/> to the builder.
+        /// </summary>
+        private void AppendSanitizedFullName(DefType metadataType, ref Utf8StringBuilder sb)
+        {
+            string ns = metadataType.Namespace;
+            if (ns.Length > 0)
+            {
+                AppendSanitizedName(ns, ref sb);
+                sb.Append('_');
+            }
+            AppendSanitizedName(metadataType.Name, ref sb);
+        }
+
+        private void AppendEncapsulatingTypeName(DefType type, ref Utf8StringBuilder sb)
+        {
+            DefType containingType = type.ContainingType;
+            if (type.ContainingType is not null)
+            {
+                AppendEncapsulatingTypeName(containingType, ref sb);
+                sb.Append('_');
+            }
+            AppendSanitizedFullName(type, ref sb);
+        }
+
+        public override Utf8String GetMangledTypeName(TypeDesc type)
+        {
+            var sb = new Utf8StringBuilder(stackalloc byte[256]);
+            AppendMangledTypeName(type, ref sb);
+            return sb.ToUtf8StringAndDispose();
         }
 
         /// <summary>
         /// If given <param name="type"/> is an <see cref="EcmaType"/> precompute its mangled type name
-        /// along with all the other types from the same module as <param name="type"/>.
-        /// Otherwise, it is a constructed type and to the EcmaType's mangled name we add a suffix to
-        /// show what kind of constructed type it is (e.g. appending __Array for an array type).
+        /// along with all the other types from the same module as <paramref name="type"/>.
+        /// <para/>
+        /// Otherwise, it is a constructed type and to the <see cref="EcmaType"/>'s mangled name we add a suffix or prefix to
+        /// show what kind of constructed type it is (e.g. prepending <c>__Array</c> for an array type).
         /// </summary>
-        /// <param name="type">Type to mangled</param>
-        /// <returns>Mangled name for <param name="type"/>.</returns>
-        private string ComputeMangledTypeName(TypeDesc type)
+        /// <param name="type">Type to mangle</param>
+        /// <param name="sb">The string builder to append the mangled type name to.</param>
+        public override void AppendMangledTypeName(TypeDesc type, ref Utf8StringBuilder sb)
         {
+            lock (this)
+            {
+                if (_mangledTypeNames.TryGetValue(type, out Utf8String mangledName))
+                {
+                    sb.Append(mangledName);
+                    return;
+                }
+            }
+
             if (type is EcmaType ecmaType)
             {
-                string assemblyName = ((EcmaAssembly)ecmaType.EcmaModule).GetName().Name;
-                bool isSystemPrivate = assemblyName.StartsWith("System.Private.");
+                // Create temporary builder for the module name mangling
+                var moduleNameBuilder = new Utf8StringBuilder(stackalloc byte[256]);
+
+                ReadOnlySpan<char> assemblyName = ((EcmaAssembly)ecmaType.EcmaModule).GetName().Name;
+                bool isSystemPrivate = assemblyName.StartsWith("System.Private.", StringComparison.Ordinal);
 
                 // Abbreviate System.Private to S.P. This might conflict with user defined assembly names,
                 // but we already have a problem due to running SanitizeName without disambiguating the result
                 // This problem needs a better fix.
                 if (isSystemPrivate)
-                    assemblyName = string.Concat("S.P.", assemblyName.AsSpan(15));
-                string prependAssemblyName = SanitizeName(assemblyName);
+                {
+                    moduleNameBuilder.Append("S_P_"u8);
+                    assemblyName = assemblyName.Slice(15);
+                }
 
-                var deduplicator = new HashSet<string>();
+                AppendSanitizedName(assemblyName, ref moduleNameBuilder);
+                moduleNameBuilder.Append('_');
+
+                int assemblyNameEnd = sb.Length;
+
+                var nameCounts = new Dictionary<int, int>();
 
                 // Add consistent names for all types in the module, independent on the order in which
                 // they are compiled
@@ -188,279 +225,269 @@ namespace ILCompiler
                 {
                     bool isSystemModule = ecmaType.Module == ecmaType.Context.SystemModule;
 
-                    if (!_mangledTypeNames.ContainsKey(type))
+                    foreach (MetadataType moduleType in ecmaType.EcmaModule.GetAllTypes())
                     {
-                        foreach (MetadataType t in ecmaType.EcmaModule.GetAllTypes())
+                        // If this is one of the well known types, use a shorter name.
+                        if (isSystemModule)
                         {
-                            string name = t.GetFullName();
-
-                            // Include encapsulating type
-                            DefType containingType = t.ContainingType;
-                            while (containingType != null)
+                            ReadOnlySpan<byte> wellKnownName = moduleType.Category switch
                             {
-                                name = containingType.GetFullName() + "_" + name;
-                                containingType = containingType.ContainingType;
-                            }
+                                TypeFlags.Boolean => "Bool"u8,
+                                TypeFlags.Byte => "UInt8"u8,
+                                TypeFlags.SByte => "Int8"u8,
+                                TypeFlags.UInt16 => "UInt16"u8,
+                                TypeFlags.Int16 => "Int16"u8,
+                                TypeFlags.UInt32 => "UInt32"u8,
+                                TypeFlags.Int32 => "Int32"u8,
+                                TypeFlags.UInt64 => "UInt64"u8,
+                                TypeFlags.Int64 => "Int64"u8,
+                                TypeFlags.Char => "Char"u8,
+                                TypeFlags.Double => "Double"u8,
+                                TypeFlags.Single => "Single"u8,
+                                TypeFlags.IntPtr => "IntPtr"u8,
+                                TypeFlags.UIntPtr => "UIntPtr"u8,
+                                _ when !moduleType.IsObject => "String"u8,
 
-                            name = prependAssemblyName + "_" + SanitizeName(name, true);
+                                _ => "Object"u8
+                            };
 
-                            // If this is one of the well known types, use a shorter name
                             // We know this won't conflict because all the other types are
                             // prefixed by the assembly name.
-                            if (isSystemModule)
-                            {
-                                switch (t.Category)
-                                {
-                                    case TypeFlags.Boolean: name = "Bool"; break;
-                                    case TypeFlags.Byte: name = "UInt8"; break;
-                                    case TypeFlags.SByte: name = "Int8"; break;
-                                    case TypeFlags.UInt16: name = "UInt16"; break;
-                                    case TypeFlags.Int16: name = "Int16"; break;
-                                    case TypeFlags.UInt32: name = "UInt32"; break;
-                                    case TypeFlags.Int32: name = "Int32"; break;
-                                    case TypeFlags.UInt64: name = "UInt64"; break;
-                                    case TypeFlags.Int64: name = "Int64"; break;
-                                    case TypeFlags.Char: name = "Char"; break;
-                                    case TypeFlags.Double: name = "Double"; break;
-                                    case TypeFlags.Single: name = "Single"; break;
-                                    case TypeFlags.IntPtr: name = "IntPtr"; break;
-                                    case TypeFlags.UIntPtr: name = "UIntPtr"; break;
-                                    default:
-                                        if (t.IsObject)
-                                            name = "Object";
-                                        else if (t.IsString)
-                                            name = "String";
-                                        break;
-                                }
-                            }
+                            _mangledTypeNames.Add(moduleType, new Utf8String(wellKnownName.ToArray()));
+                        }
+                        else
+                        {
+                            // Include encapsulating type
+                            AppendEncapsulatingTypeName(moduleType, ref moduleNameBuilder);
 
-                            // Ensure that name is unique and update our tables accordingly.
-                            name = DisambiguateName(name, deduplicator);
-                            deduplicator.Add(name);
-                            _mangledTypeNames.Add(t, name);
+                            // Ensure that name is unique by prepending a number suffix if needed and update our tables accordingly.
+                            AppendDisambiguatingNameSuffix(moduleNameBuilder.AsSpan(assemblyNameEnd), nameCounts, ref moduleNameBuilder);
+
+                            _mangledTypeNames.Add(moduleType, moduleNameBuilder.ToUtf8String());
+
+                            // Truncate to the assembly name
+                            sb.Truncate(newLength: assemblyNameEnd);
                         }
                     }
-                    return _mangledTypeNames[type];
+
+                    moduleNameBuilder.Dispose();
+
+                    // We're done precomputing module mangled names, append the wanted name.
+                    if (_mangledTypeNames.TryGetValue(type, out Utf8String mangledName))
+                    {
+                        sb.Append(mangledName);
+                        return;
+                    };
                 }
             }
 
-            string mangledName;
-
-            switch (type.Category)
+            switch (type)
             {
-                case TypeFlags.Array:
-                    mangledName = "__MDArray" +
-                                  EnterNameScopeSequence +
-                                  GetMangledTypeName(((ArrayType)type).ElementType) +
-                                  DelimitNameScopeSequence +
-                                  ((ArrayType)type).Rank.ToStringInvariant() +
-                                  ExitNameScopeSequence;
-                    break;
-                case TypeFlags.SzArray:
-                    mangledName = "__Array" + NestMangledName(GetMangledTypeName(((ArrayType)type).ElementType));
-                    break;
-                case TypeFlags.ByRef:
-                    mangledName = GetMangledTypeName(((ByRefType)type).ParameterType) + NestMangledName("ByRef");
-                    break;
-                case TypeFlags.Pointer:
-                    mangledName = GetMangledTypeName(((PointerType)type).ParameterType) + NestMangledName("Pointer");
-                    break;
-                case TypeFlags.FunctionPointer:
-                    var fnPtrType = (FunctionPointerType)type;
-                    mangledName = "__FnPtr_" + ((int)fnPtrType.Signature.Flags).ToString("X2") + EnterNameScopeSequence;
-                    mangledName += GetMangledTypeName(fnPtrType.Signature.ReturnType);
+                case ArrayType arrayType when type.Category is TypeFlags.Array:
+                    sb.Append("__MDArray"u8);
 
-                    mangledName += EnterNameScopeSequence;
+                    sb.Append(EnterNameScopeSequence);
+                    AppendMangledTypeName(arrayType.ElementType, ref sb);
+                    sb.Append(DelimitNameScopeSequence);
+                    sb.AppendInvariant(arrayType.Rank);
+                    sb.Append(ExitNameScopeSequence);
+                    break;
+                case ArrayType arrayType when type.Category is TypeFlags.SzArray:
+                    sb.Append("__Array"u8);
+                    sb.Append(EnterNameScopeSequence);
+                    AppendMangledTypeName(arrayType.ElementType, ref sb);
+                    sb.Append(ExitNameScopeSequence);
+                    break;
+                case ByRefType byRefType:
+                    AppendMangledTypeName(byRefType.ParameterType, ref sb);
+                    sb.Append("<ByRef>"u8);
+                    break;
+                case PointerType pointerType:
+                    AppendMangledTypeName(pointerType.ParameterType, ref sb);
+                    sb.Append("<Pointer>"u8);
+                    break;
+                case FunctionPointerType fnPtrType:
+                    sb.Append("__FnPtr_"u8);
+                    sb.AppendInvariant((int)fnPtrType.Signature.Flags, format: "X2");
+                    sb.Append(EnterNameScopeSequence);
+                    AppendMangledTypeName(fnPtrType.Signature.ReturnType, ref sb);
+
+                    sb.Append(EnterNameScopeSequence);
                     for (int i = 0; i < fnPtrType.Signature.Length; i++)
                     {
                         if (i != 0)
-                            mangledName += DelimitNameScopeSequence;
-                        mangledName += GetMangledTypeName(fnPtrType.Signature[i]);
+                            sb.Append(DelimitNameScopeSequence);
+                        AppendMangledTypeName(fnPtrType.Signature[i], ref sb);
                     }
-                    mangledName += ExitNameScopeSequence;
+                    sb.Append(ExitNameScopeSequence);
 
-                    mangledName += ExitNameScopeSequence;
+                    sb.Append(ExitNameScopeSequence);
+                    break;
+                case IPrefixMangledMethod prefixMangledMethod:
+                    AppendPrefixMangledMethodName(prefixMangledMethod, ref sb);
+                    break;
+                case IPrefixMangledType prefixMangledType:
+                    AppendPrefixMangledTypeName(prefixMangledType, ref sb);
                     break;
                 default:
                     // Case of a generic type. If `type' is a type definition we use the type name
                     // for mangling, otherwise we use the mangling of the type and its generic type
                     // parameters, e.g. A <B> becomes A_<___B_>_.
-                    var typeDefinition = type.GetTypeDefinition();
+                    TypeDesc typeDefinition = type.GetTypeDefinition();
                     if (typeDefinition != type)
                     {
-                        mangledName = GetMangledTypeName(typeDefinition);
+                        AppendMangledTypeName(typeDefinition, ref sb);
 
-                        var inst = type.Instantiation;
-                        string mangledInstantiation = "";
+                        sb.Append(EnterNameScopeSequence);
+
+                        Instantiation inst = type.Instantiation;
                         for (int i = 0; i < inst.Length; i++)
                         {
-                            string instArgName = GetMangledTypeName(inst[i]);
                             if (i > 0)
-                                mangledInstantiation += "__";
+                                sb.Append("__"u8);
 
-                            mangledInstantiation += instArgName;
+                            AppendMangledTypeName(inst[i], ref sb);
                         }
-                        mangledName += NestMangledName(mangledInstantiation);
-                    }
-                    else if (type is IPrefixMangledMethod)
-                    {
-                        mangledName = GetPrefixMangledMethodName((IPrefixMangledMethod)type).ToString();
-                    }
-                    else if (type is IPrefixMangledType)
-                    {
-                        mangledName = GetPrefixMangledTypeName((IPrefixMangledType)type).ToString();
+
+                        sb.Append(ExitNameScopeSequence);
                     }
                     else
                     {
                         // This is a type definition. Since we didn't fall in the `is EcmaType` case above,
                         // it's likely a compiler-generated type.
-                        mangledName = SanitizeName(((DefType)type).GetFullName(), true);
+                        AppendSanitizedFullName((DefType)type, ref sb);
                     }
                     break;
             }
 
             lock (this)
             {
-                // Ensure that name is unique and update our tables accordingly.
-                _mangledTypeNames.TryAdd(type, mangledName);
+                // Ensure that name is unique and update our tables accordingly
+                _mangledTypeNames.TryAdd(type, sb.ToUtf8String());
             }
-
-            return mangledName;
         }
 
-        private Dictionary<MethodDesc, Utf8String> _mangledMethodNames = new Dictionary<MethodDesc, Utf8String>();
-        private Dictionary<MethodDesc, Utf8String> _unqualifiedMangledMethodNames = new Dictionary<MethodDesc, Utf8String>();
+        private readonly Dictionary<MethodDesc, Utf8String> _mangledMethodNames = new Dictionary<MethodDesc, Utf8String>();
+        private readonly Dictionary<MethodDesc, Utf8String> _unqualifiedMangledMethodNames = new Dictionary<MethodDesc, Utf8String>();
 
         public override Utf8String GetMangledMethodName(MethodDesc method)
         {
-            Utf8String utf8MangledName;
+            var sb = new Utf8StringBuilder(stackalloc byte[256]);
+            AppendMangledMethodName(method, ref sb);
+            return sb.ToUtf8StringAndDispose();
+        }
+
+        public override void AppendMangledMethodName(MethodDesc method, ref Utf8StringBuilder sb)
+        {
             lock (this)
             {
-                if (_mangledMethodNames.TryGetValue(method, out utf8MangledName))
-                    return utf8MangledName;
+                if (_mangledMethodNames.TryGetValue(method, out Utf8String utf8MangledName))
+                {
+                    sb.Append(utf8MangledName);
+                    return;
+                }
             }
 
-            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-            sb.Append(GetMangledTypeName(method.OwningType));
+            AppendMangledTypeName(method.OwningType, ref sb);
             sb.Append("__"u8);
-            sb.Append(GetUnqualifiedMangledMethodName(method));
-            utf8MangledName = sb.ToUtf8String();
+            AppendUnqualifiedMangledMethodName(method, ref sb);
 
             lock (this)
             {
-                _mangledMethodNames.TryAdd(method, utf8MangledName);
-            }
-
-            return utf8MangledName;
-        }
-
-        private Utf8String GetUnqualifiedMangledMethodName(MethodDesc method)
-        {
-            lock (this)
-            {
-                Utf8String mangledName;
-                if (_unqualifiedMangledMethodNames.TryGetValue(method, out mangledName))
-                    return mangledName;
-
-                return ComputeUnqualifiedMangledMethodName(method);
+                _mangledMethodNames.TryAdd(method, sb.ToUtf8String());
             }
         }
 
-        private Utf8String GetPrefixMangledTypeName(IPrefixMangledType prefixMangledType)
+        private void AppendPrefixMangledTypeName(IPrefixMangledType prefixMangledType, ref Utf8StringBuilder sb)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-            sb.Append(EnterNameScopeSequence);
-            sb.Append(prefixMangledType.Prefix);
-            sb.Append(ExitNameScopeSequence);
-            sb.Append(GetMangledTypeName(prefixMangledType.BaseType));
-            return sb.ToUtf8String();
+            AppendNestedMangledName(prefixMangledType.Prefix, ref sb);
+            AppendMangledTypeName(prefixMangledType.BaseType, ref sb);
         }
 
-        private Utf8String GetPrefixMangledSignatureName(IPrefixMangledSignature prefixMangledSignature)
+        private void AppendPrefixMangledSignatureName(IPrefixMangledSignature prefixMangledSignature, ref Utf8StringBuilder sb)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-            sb.Append(EnterNameScopeSequence);
-            sb.Append(prefixMangledSignature.Prefix);
-            sb.Append(ExitNameScopeSequence);
+            AppendNestedMangledName(prefixMangledSignature.Prefix, ref sb);
 
             var signature = prefixMangledSignature.BaseSignature;
-            sb.Append(signature.Flags.ToStringInvariant());
+            sb.AppendInvariant((int)signature.Flags);
 
             sb.Append(EnterNameScopeSequence);
 
-            string sigRetTypeName = GetMangledTypeName(signature.ReturnType);
-            sb.Append(sigRetTypeName);
+            AppendMangledTypeName(signature.ReturnType, ref sb);
 
             for (int i = 0; i < signature.Length; i++)
             {
                 sb.Append("__"u8);
-                string sigArgName = GetMangledTypeName(signature[i]);
-                sb.Append(sigArgName);
+                AppendMangledTypeName(signature[i], ref sb); // sigArgName
             }
 
             sb.Append(ExitNameScopeSequence);
-
-            return sb.ToUtf8String();
         }
 
-        private Utf8String GetPrefixMangledMethodName(IPrefixMangledMethod prefixMangledMethod)
+        private void AppendPrefixMangledMethodName(IPrefixMangledMethod prefixMangledMethod, ref Utf8StringBuilder sb)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-            sb.Append(EnterNameScopeSequence);
-            sb.Append(prefixMangledMethod.Prefix);
-            sb.Append(ExitNameScopeSequence);
-            sb.Append(GetMangledMethodName(prefixMangledMethod.BaseMethod));
-            return sb.ToUtf8String();
+            AppendNestedMangledName(prefixMangledMethod.Prefix, ref sb);
+            AppendMangledMethodName(prefixMangledMethod.BaseMethod, ref sb);
         }
 
-        private Utf8String ComputeUnqualifiedMangledMethodName(MethodDesc method)
+        private void AppendUnqualifiedMangledMethodName(MethodDesc method, ref Utf8StringBuilder sb)
         {
+            lock (this)
+            {
+                if (_unqualifiedMangledMethodNames.TryGetValue(method, out Utf8String mangledName))
+                {
+                    sb.Append(mangledName);
+                    return;
+                }
+            }
+
             if (method is EcmaMethod)
             {
-                var deduplicator = new HashSet<string>();
+                // Create temporary builder for the owning type method name mangling
+                var methodNameBuilder = new Utf8StringBuilder(stackalloc byte[256]);
+
+                var nameCounts = new Dictionary<int, int>();
 
                 // Add consistent names for all methods of the type, independent on the order in which
                 // they are compiled
                 lock (this)
                 {
-                    if (!_unqualifiedMangledMethodNames.ContainsKey(method))
+                    foreach (MethodDesc m in method.OwningType.GetMethods())
                     {
-                        foreach (var m in method.OwningType.GetMethods())
-                        {
-                            string name = SanitizeName(m.Name);
+                        AppendSanitizedName(m.Name, ref methodNameBuilder);
+                        AppendDisambiguatingNameSuffix(methodNameBuilder.AsSpan(), nameCounts, ref methodNameBuilder);
 
-                            name = DisambiguateName(name, deduplicator);
-                            deduplicator.Add(name);
+                        _unqualifiedMangledMethodNames.Add(m, methodNameBuilder.ToUtf8String());
 
-                            _unqualifiedMangledMethodNames.Add(m, name);
-                        }
+                        methodNameBuilder.Clear();
                     }
-                    return _unqualifiedMangledMethodNames[method];
+
+                    // We're done precomputing method names, append the wanted mangled name.
+                    if (_unqualifiedMangledMethodNames.TryGetValue(method, out Utf8String mangledName))
+                    {
+                        sb.Append(mangledName);
+                        return;
+                    };
                 }
             }
-
-            Utf8String utf8MangledName;
 
             var methodDefinition = method.GetMethodDefinition();
             if (methodDefinition != method)
             {
                 // Instantiated generic method
-                Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-                sb.Append(GetUnqualifiedMangledMethodName(methodDefinition.GetTypicalMethodDefinition()));
+                AppendUnqualifiedMangledMethodName(methodDefinition.GetTypicalMethodDefinition(), ref sb);
 
                 sb.Append(EnterNameScopeSequence);
 
-                var inst = method.Instantiation;
+                Instantiation inst = method.Instantiation;
                 for (int i = 0; i < inst.Length; i++)
                 {
                     if (i > 0)
                         sb.Append("__"u8);
-                    sb.Append(GetMangledTypeName(inst[i])); //instArgName
+                    AppendMangledTypeName(inst[i], ref sb); // instArgName
                 }
 
-                sb.Append(ExitNameScopeSequence);
-
-                utf8MangledName = sb.ToUtf8String();
+                sb.Append(ExitNameScopeSequence);;
             }
             else
             {
@@ -468,110 +495,117 @@ namespace ILCompiler
                 if (typicalMethodDefinition != method)
                 {
                     // Method on an instantiated type
-                    utf8MangledName = GetUnqualifiedMangledMethodName(typicalMethodDefinition);
+                    AppendUnqualifiedMangledMethodName(typicalMethodDefinition, ref sb);
                 }
-                else if (method is IPrefixMangledMethod)
+                else if (method is IPrefixMangledMethod prefixMangledMethod)
                 {
-                    utf8MangledName = GetPrefixMangledMethodName((IPrefixMangledMethod)method);
+                    AppendPrefixMangledMethodName(prefixMangledMethod, ref sb);
                 }
-                else if (method is IPrefixMangledType)
+                else if (method is IPrefixMangledType prefixMangledType)
                 {
-                    utf8MangledName = GetPrefixMangledTypeName((IPrefixMangledType)method);
+                    AppendPrefixMangledTypeName(prefixMangledType, ref sb);
                 }
-                else if (method is IPrefixMangledSignature)
+                else if (method is IPrefixMangledSignature prefixMangledSig)
                 {
-                    utf8MangledName = GetPrefixMangledSignatureName((IPrefixMangledSignature)method);
+                    AppendPrefixMangledSignatureName(prefixMangledSig, ref sb);
                 }
                 else
                 {
                     // Assume that Name is unique for all other methods
-                    utf8MangledName = new Utf8String(SanitizeName(method.Name));
+                    AppendSanitizedName(method.Name, ref sb);
                 }
             }
-
-            return utf8MangledName;
         }
 
-        private Dictionary<FieldDesc, Utf8String> _mangledFieldNames = new Dictionary<FieldDesc, Utf8String>();
+        private readonly Dictionary<FieldDesc, Utf8String> _mangledFieldNames = new Dictionary<FieldDesc, Utf8String>();
 
         public override Utf8String GetMangledFieldName(FieldDesc field)
         {
-            lock (this)
-            {
-                Utf8String mangledName;
-                if (_mangledFieldNames.TryGetValue(field, out mangledName))
-                    return mangledName;
-
-                return ComputeMangledFieldName(field);
-            }
+            var sb = new Utf8StringBuilder(stackalloc byte[256]);
+            AppendMangledFieldName(field, ref sb);
+            return sb.ToUtf8StringAndDispose();
         }
 
-        private Utf8String ComputeMangledFieldName(FieldDesc field)
+        public override void AppendMangledFieldName(FieldDesc field, ref Utf8StringBuilder sb)
         {
-            string prependTypeName = GetMangledTypeName(field.OwningType);
+            lock (this)
+            {
+                if (_mangledFieldNames.TryGetValue(field, out Utf8String mangledName))
+                {
+                    sb.Append(mangledName);
+                    return;
+                }
+            }
 
             if (field is EcmaField)
             {
-                var deduplicator = new HashSet<string>();
+                // Create temporary builder for the owning type's field name mangling
+                var fieldNameBuilder = new Utf8StringBuilder(stackalloc byte[256]);
+
+                AppendMangledTypeName(field.OwningType, ref fieldNameBuilder); // TODO: Was prependTypeName. This could be null? I don't think so..
+                sb.Append("__"u8);
+
+                var nameCounts = new Dictionary<int, int>();
+
+                int prependedTypeNameEnd = sb.Length;
 
                 // Add consistent names for all fields of the type, independent on the order in which
                 // they are compiled
                 lock (this)
                 {
-                    if (!_mangledFieldNames.ContainsKey(field))
+                    foreach (FieldDesc f in field.OwningType.GetFields())
                     {
-                        foreach (var f in field.OwningType.GetFields())
-                        {
-                            string name = SanitizeName(f.Name);
+                        AppendSanitizedName(f.Name, ref fieldNameBuilder);
+                        AppendDisambiguatingNameSuffix(fieldNameBuilder.AsSpan(prependedTypeNameEnd), nameCounts, ref fieldNameBuilder);
 
-                            name = DisambiguateName(name, deduplicator);
-                            deduplicator.Add(name);
+                        _mangledFieldNames.Add(f, fieldNameBuilder.ToUtf8String());
 
-                            if (prependTypeName != null)
-                                name = prependTypeName + "__" + name;
-
-                            _mangledFieldNames.Add(f, name);
-                        }
+                        // Truncate back to the prepended type name prefix
+                        fieldNameBuilder.Truncate(newLength: prependedTypeNameEnd);
                     }
-                    return _mangledFieldNames[field];
+
+                    // We're done precomputing owning type's mangled field names, append the wanted field name.
+                    if (_mangledFieldNames.TryGetValue(field, out Utf8String mangledName))
+                    {
+                        sb.Append(mangledName);
+                        return;
+                    };
                 }
             }
 
+            AppendMangledTypeName(field.OwningType, ref sb); // prependTypeName TODO: This could previously be null?
 
-            string mangledName = SanitizeName(field.Name);
-
-            if (prependTypeName != null)
-                mangledName = prependTypeName + "__" + mangledName;
-
-            Utf8String utf8MangledName = new Utf8String(mangledName);
+            // TODO: if (prependTypeName != null)
+            {
+                sb.Append("__"u8);
+                AppendSanitizedName(field.Name, ref sb);
+            }
 
             lock (this)
             {
-                _mangledFieldNames.TryAdd(field, utf8MangledName);
+                _mangledFieldNames.TryAdd(field, sb.ToUtf8String());
             }
-
-            return utf8MangledName;
         }
 
-        private Dictionary<string, string> _mangledStringLiterals = new Dictionary<string, string>();
+        private readonly Dictionary<string, Utf8String> _mangledStringLiterals = new Dictionary<string, Utf8String>();
 
-        public override string GetMangledStringName(string literal)
+        public override void AppendMangledStringName(string literal, ref Utf8StringBuilder sb)
         {
-            string mangledName;
             lock (this)
             {
-                if (_mangledStringLiterals.TryGetValue(literal, out mangledName))
-                    return mangledName;
+                if (_mangledStringLiterals.TryGetValue(literal, out Utf8String mangledName))
+                {
+                    sb.Append(mangledName);
+                    return;
+                }
             }
 
-            mangledName = SanitizeNameWithHash(literal);
+            AppendSanitizedNameWithHash(literal, ref sb);
 
             lock (this)
             {
-                _mangledStringLiterals.TryAdd(literal, mangledName);
+                _mangledStringLiterals.TryAdd(literal, sb.ToUtf8String());
             }
-
-            return mangledName;
         }
     }
 }
