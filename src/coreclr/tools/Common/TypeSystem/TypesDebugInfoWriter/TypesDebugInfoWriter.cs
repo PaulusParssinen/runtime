@@ -40,14 +40,14 @@ namespace Internal.TypeSystem.TypesDebugInfo
     {
         public uint ElementType;
         public ulong ElementCount;
-        public string Name;
+        public Utf8String Name;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct ClassTypeDescriptor
     {
         public int IsStruct;
-        public string Name;
+        public Utf8String Name;
         public uint BaseClassId;
         public ulong InstanceSize;
     }
@@ -109,6 +109,6 @@ namespace Internal.TypeSystem.TypesDebugInfo
     {
         public uint MemberFunction;
         public uint ParentClass;
-        public string Name;
+        public Utf8String Name;
     }
 }

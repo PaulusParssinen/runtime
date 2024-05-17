@@ -11,6 +11,7 @@ using Internal.TypeSystem;
 using Internal.TypeSystem.TypesDebugInfo;
 
 using Debug = System.Diagnostics.Debug;
+using Internal.Text;
 
 namespace ILCompiler.ObjectWriter
 {
@@ -20,7 +21,7 @@ namespace ILCompiler.ObjectWriter
     /// </summary>
     internal abstract class UnixObjectWriter : ObjectWriter
     {
-        private sealed record UnixSectionDefinition(string SymbolName, Stream SectionStream);
+        private sealed record UnixSectionDefinition(Utf8String SymbolName, Stream SectionStream);
 
         // Debugging
         private DwarfBuilder _dwarfBuilder;
@@ -49,12 +50,12 @@ namespace ILCompiler.ObjectWriter
         {
         }
 
-        private protected override void CreateSection(ObjectNodeSection section, string comdatName, string symbolName, Stream sectionStream)
+        private protected override void CreateSection(ObjectNodeSection section, Utf8String comdatName, Utf8String symbolName, Stream sectionStream)
         {
             if (section.Type != SectionType.Debug &&
                 section != LsdaSection &&
                 section != EhFrameSection &&
-                (comdatName is null || Equals(comdatName, symbolName)))
+                (comdatName == default || comdatName == symbolName))
             {
                 // Record code and data sections that can be referenced from debugging information
                 _sections.Add(new UnixSectionDefinition(symbolName, sectionStream));
@@ -65,7 +66,7 @@ namespace ILCompiler.ObjectWriter
             }
         }
 
-        private protected virtual bool EmitCompactUnwinding(string startSymbolName, ulong length, string lsdaSymbolName, byte[] blob) => false;
+        private protected virtual bool EmitCompactUnwinding(Utf8String startSymbolName, ulong length, Utf8String lsdaSymbolName, byte[] blob) => false;
 
         private protected virtual bool UseFrameNames => false;
 
@@ -170,7 +171,7 @@ namespace ILCompiler.ObjectWriter
         private protected override void EmitUnwindInfo(
             SectionWriter sectionWriter,
             INodeWithCodeInfo nodeWithCodeInfo,
-            string currentSymbolName)
+            Utf8String currentSymbolName)
         {
             if (nodeWithCodeInfo.FrameInfos is FrameInfo[] frameInfos &&
                 nodeWithCodeInfo is ISymbolDefinitionNode)
@@ -247,7 +248,7 @@ namespace ILCompiler.ObjectWriter
 
         private protected override void EmitDebugFunctionInfo(
             uint methodTypeIndex,
-            string methodName,
+            Utf8String methodName,
             SymbolDefinition methodSymbol,
             INodeWithDebugInfo debugNode,
             bool hasSequencePoints)
@@ -281,7 +282,7 @@ namespace ILCompiler.ObjectWriter
             }
         }
 
-        private protected override void EmitDebugSections(IDictionary<string, SymbolDefinition> definedSymbols)
+        private protected override void EmitDebugSections(IDictionary<Utf8String, SymbolDefinition> definedSymbols)
         {
             foreach (UnixSectionDefinition section in _sections)
             {
@@ -309,12 +310,12 @@ namespace ILCompiler.ObjectWriter
                 arangeSectionWriter,
                 symbolName =>
                 {
-                    if (definedSymbols.TryGetValue(ExternCName(symbolName), out SymbolDefinition symbolDef) &&
+                    if (definedSymbols.TryGetValue(AppendExternCName(symbolName), out SymbolDefinition symbolDef) &&
                         _sections[symbolDef.SectionIndex] is UnixSectionDefinition section)
                     {
                         return (section.SymbolName, symbolDef.Value);
                     }
-                    return (null, 0);
+                    return (default, 0);
                 });
         }
 
