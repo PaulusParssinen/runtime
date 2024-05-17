@@ -25,10 +25,10 @@ namespace Internal.Text
 
         // For now, define implicit conversions between string and Utf8String to aid the transition
         // These conversions will be removed eventually
-        public static implicit operator Utf8String(string s)
-        {
-            return new Utf8String(s);
-        }
+        //public static implicit operator Utf8String(string s)
+        //{
+        //    return new Utf8String(s);
+        //}
 
         public ReadOnlySpan<byte> AsSpan() => _value;
 
@@ -42,11 +42,13 @@ namespace Internal.Text
             return (obj is Utf8String utf8String) && Equals(utf8String);
         }
 
-        public override unsafe int GetHashCode()
+        public override unsafe int GetHashCode() => GetHashCode(_value);
+
+        public static unsafe int GetHashCode(ReadOnlySpan<byte> utf8StringSpan)
         {
-            int length = _value.Length;
+            int length = utf8StringSpan.Length;
             uint hash = (uint)length;
-            fixed (byte* ap = _value)
+            fixed (byte* ap = utf8StringSpan)
             {
                 byte* a = ap;
 

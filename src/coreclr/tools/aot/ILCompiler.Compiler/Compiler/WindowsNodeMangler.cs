@@ -1,7 +1,10 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using ILLink.Shared.TrimAnalysis;
+using Internal.Text;
 using Internal.TypeSystem;
+using System;
 using System.Diagnostics;
 
 namespace ILCompiler
@@ -24,60 +27,71 @@ namespace ILCompiler
         }
 
         // Mangled name of boxed version of a type
-        public sealed override string MangledBoxedTypeName(TypeDesc type)
+        public sealed override void AppendMangledBoxedTypeName(TypeDesc type, ref Utf8StringBuilder sb)
         {
             Debug.Assert(type.IsValueType);
-            return "Boxed_" + NameMangler.GetMangledTypeName(type);
+            sb.Append("Boxed_"u8);
+            NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
-        public sealed override string MethodTable(TypeDesc type)
+        public sealed override void AppendMethodTable(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            string mangledJustTypeName;
-
-            if (type.IsValueType)
-                mangledJustTypeName = MangledBoxedTypeName(type);
-            else
-                mangledJustTypeName = NameMangler.GetMangledTypeName(type);
-
             // "??_7TypeName@@6B@" is the C++ mangling for "const TypeName::`vftable'"
             // This, along with LF_VTSHAPE debug records added by the object writer
             // is the debugger magic that allows debuggers to vcast types to their bases.
-            return "??_7" + mangledJustTypeName + "@@6B@";
+
+            sb.Append("??_7"u8);
+            if (type.IsValueType)
+                AppendMangledBoxedTypeName(type, ref sb);
+            else
+                NameMangler.AppendMangledTypeName(type, ref sb);
+            sb.Append("@@6B@"u8);
         }
 
-        private string CreateStaticFieldName(TypeDesc type, string fieldName)
+        private void AppendStaticFieldName(TypeDesc type, ReadOnlySpan<byte> fieldName, ref Utf8StringBuilder sb)
         {
-            return @$"?{fieldName}@{NameMangler.GetMangledTypeName(type)}@@";
+            sb.Append('?');
+            sb.Append(fieldName);
+            sb.Append('@');
+            NameMangler.AppendMangledTypeName(type, ref sb);
+            sb.Append("@@"u8);
         }
 
-        public sealed override string GCStatics(TypeDesc type)
+        public sealed override void AppendGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return CreateStaticFieldName(type, GCStaticMemberName);
+            AppendStaticFieldName(type, "__GCSTATICS"u8, ref sb);
         }
 
-        public sealed override string NonGCStatics(TypeDesc type)
+        public sealed override void AppendNonGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return CreateStaticFieldName(type, NonGCStaticMemberName);
+            AppendStaticFieldName(type, "__NONGCSTATICS"u8, ref sb);
         }
 
-        public sealed override string ThreadStatics(TypeDesc type)
+        public sealed override void AppendThreadStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return CreateStaticFieldName(type, NameMangler.CompilationUnitPrefix + ThreadStaticMemberName);
+            sb.Append('?');
+            sb.Append(NameMangler.CompilationUnitPrefix);
+            sb.Append(ThreadStaticMemberName);
+            sb.Append('@');
+            NameMangler.AppendMangledTypeName(type, ref sb);
+            sb.Append("@@"u8);
         }
 
-        public sealed override string ThreadStaticsIndex(TypeDesc type)
+        public sealed override void AppendThreadStaticsIndex(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return CreateStaticFieldName(type, ThreadStaticIndexName);
+            AppendStaticFieldName(type, "__THREADSTATICINDEX"u8, ref sb);
         }
 
-        public sealed override string TypeGenericDictionary(TypeDesc type)
+        public sealed override void AppendTypeGenericDictionary(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return GenericDictionaryNamePrefix + NameMangler.GetMangledTypeName(type);
+            sb.Append(GenericDictionaryNamePrefix);
+            NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
-        public sealed override string MethodGenericDictionary(MethodDesc method)
+        public sealed override void AppendMethodGenericDictionary(MethodDesc method, ref Utf8StringBuilder sb)
         {
-            return GenericDictionaryNamePrefix + NameMangler.GetMangledMethodName(method);
+            sb.Append(GenericDictionaryNamePrefix);
+            NameMangler.AppendMangledMethodName(method, ref sb);
         }
 
         public sealed override string ExternMethod(string unmangledName, MethodDesc method)

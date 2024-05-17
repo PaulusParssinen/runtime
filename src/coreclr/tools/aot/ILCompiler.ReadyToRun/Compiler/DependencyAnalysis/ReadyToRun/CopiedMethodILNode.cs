@@ -34,7 +34,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("ILMethod_"u8);
-            sb.Append(nameMangler.GetMangledMethodName(_method));
+            nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)

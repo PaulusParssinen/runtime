@@ -39,7 +39,7 @@ namespace ILCompiler.DependencyAnalysis
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("unbox_"u8);
-            sb.Append(nameMangler.GetMangledMethodName(Method));
+            nameMangler.AppendMangledMethodName(Method, ref sb);
         }
 
         public static string GetMangledName(NameMangler nameMangler, MethodDesc method)

@@ -31,7 +31,7 @@ namespace ILCompiler.DependencyAnalysis
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__InterfaceDispatchCell_"u8);
-            sb.Append(nameMangler.GetMangledMethodName(_targetMethod));
+            nameMangler.AppendMangledMethodName(_targetMethod, ref sb);
 
             if (_callSiteIdentifier != null)
             {

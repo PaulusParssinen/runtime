@@ -34,7 +34,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("__coldcode_"u8);
-            sb.Append(nameMangler.GetMangledMethodName(_owningMethod));
+            nameMangler.AppendMangledMethodName(_owningMethod, ref sb);
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

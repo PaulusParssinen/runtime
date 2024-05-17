@@ -93,22 +93,22 @@ namespace ILCompiler.DependencyAnalysis
             {
                 case ReadyToRunHelperId.GetNonGCStaticBase:
                     sb.Append("__GetNonGCStaticBase_"u8);
-                    sb.Append(nameMangler.GetMangledTypeName((TypeDesc)_target));
+                    nameMangler.AppendMangledTypeName((TypeDesc)_target, ref sb);
                     break;
                 case ReadyToRunHelperId.GetGCStaticBase:
                     sb.Append("__GetGCStaticBase_"u8);
-                    sb.Append(nameMangler.GetMangledTypeName((TypeDesc)_target));
+                    nameMangler.AppendMangledTypeName((TypeDesc)_target, ref sb);
                     break;
                 case ReadyToRunHelperId.GetThreadStaticBase:
                     sb.Append("__GetThreadStaticBase_"u8);
-                    sb.Append(nameMangler.GetMangledTypeName((TypeDesc)_target));
+                    nameMangler.AppendMangledTypeName((TypeDesc)_target, ref sb);
                     break;
                 case ReadyToRunHelperId.DelegateCtor:
                     ((DelegateCreationInfo)_target).AppendMangledName(nameMangler, ref sb);
                     break;
                 case ReadyToRunHelperId.ResolveVirtualFunction:
                     sb.Append("__ResolveVirtualFunction_"u8);
-                    sb.Append(nameMangler.GetMangledMethodName((MethodDesc)_target));
+                    nameMangler.AppendMangledMethodName((MethodDesc)_target, ref sb);
                     break;
                 default:
                     throw new NotImplementedException();

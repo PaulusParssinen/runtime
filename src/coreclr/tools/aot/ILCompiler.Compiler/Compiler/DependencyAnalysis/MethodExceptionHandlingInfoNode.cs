@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Diagnostics;
-
+using ILLink.Shared.TrimAnalysis;
 using Internal.Text;
 using Internal.TypeSystem;
 
@@ -30,7 +30,8 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__ehinfo_" + nameMangler.GetMangledMethodName(_owningMethod));
+            sb.Append("__ehinfo_"u8);
+            nameMangler.AppendMangledMethodName(_owningMethod, ref sb);
         }
         public int Offset => 0;
         public override bool IsShareable => true;

@@ -1,6 +1,8 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using ILLink.Shared.TrimAnalysis;
+using Internal.Text;
 using Internal.TypeSystem;
 using System.Diagnostics;
 using System.Globalization;
@@ -10,52 +12,64 @@ namespace ILCompiler
     public sealed class UnixNodeMangler : NodeMangler
     {
         // Mangled name of boxed version of a type
-        public sealed override string MangledBoxedTypeName(TypeDesc type)
+        public sealed override void AppendMangledBoxedTypeName(TypeDesc type, ref Utf8StringBuilder sb)
         {
             Debug.Assert(type.IsValueType);
-            return "Boxed_" + NameMangler.GetMangledTypeName(type);
+            sb.Append("Boxed_"u8);
+            NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
-        public sealed override string MethodTable(TypeDesc type)
+        public sealed override void AppendMethodTable(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            string mangledJustTypeName;
-
+            // Use temporary buffer to get the length prefix
+            var nameBuffer = new Utf8StringBuilder(stackalloc byte[128]);
             if (type.IsValueType)
-                mangledJustTypeName = MangledBoxedTypeName(type);
+                AppendMangledBoxedTypeName(type, ref sb);
             else
-                mangledJustTypeName = NameMangler.GetMangledTypeName(type);
+                NameMangler.AppendMangledTypeName(type, ref sb);
 
-            return "_ZTV" + mangledJustTypeName.Length.ToString(CultureInfo.InvariantCulture) + mangledJustTypeName;
+            sb.Append("_ZTV"u8);
+            sb.AppendInvariant(nameBuffer.Length);
+            sb.Append(nameBuffer.AsSpan());
+
+            nameBuffer.Dispose();
         }
 
-        public sealed override string GCStatics(TypeDesc type)
+        public sealed override void AppendGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return "__GCSTATICS" + NameMangler.GetMangledTypeName(type);
+            sb.Append("__GCSTATICS"u8);
+            NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
-        public sealed override string NonGCStatics(TypeDesc type)
+        public sealed override void AppendNonGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return "__NONGCSTATICS" + NameMangler.GetMangledTypeName(type);
+            sb.Append("__NONGCSTATICS"u8);
+            NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
-        public sealed override string ThreadStatics(TypeDesc type)
+        public sealed override void AppendThreadStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return NameMangler.CompilationUnitPrefix + "__THREADSTATICS" + NameMangler.GetMangledTypeName(type);
+            sb.Append(NameMangler.CompilationUnitPrefix);
+            sb.Append("__THREADSTATICS"u8);
+            NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
-        public sealed override string ThreadStaticsIndex(TypeDesc type)
+        public sealed override void AppendThreadStaticsIndex(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return "__TypeThreadStaticIndex" + NameMangler.GetMangledTypeName(type);
+            sb.Append("__TypeThreadStaticIndex"u8);
+            NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
-        public sealed override string TypeGenericDictionary(TypeDesc type)
+        public sealed override void AppendTypeGenericDictionary(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return GenericDictionaryNamePrefix + NameMangler.GetMangledTypeName(type);
+            sb.Append(GenericDictionaryNamePrefix);
+            NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
-        public sealed override string MethodGenericDictionary(MethodDesc method)
+        public sealed override void AppendMethodGenericDictionary(MethodDesc method, ref Utf8StringBuilder sb)
         {
-            return GenericDictionaryNamePrefix + NameMangler.GetMangledMethodName(method);
+            sb.Append(GenericDictionaryNamePrefix);
+            NameMangler.AppendMangledMethodName(method, ref sb);
         }
 
         public sealed override string ExternMethod(string unmangledName, MethodDesc method)

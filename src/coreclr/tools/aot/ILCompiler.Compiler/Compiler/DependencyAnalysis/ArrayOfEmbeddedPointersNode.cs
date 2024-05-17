@@ -117,7 +117,7 @@ namespace ILCompiler.DependencyAnalysis
                 sb.Append(nameMangler.CompilationUnitPrefix);
                 sb.Append(_parentNode._startSymbolMangledName);
                 sb.Append('_');
-                sb.Append(_id.ToStringInvariant());
+                sb.AppendInvariant(_id);
             }
         }
     }

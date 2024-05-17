@@ -40,7 +40,7 @@ namespace ILCompiler.DependencyAnalysis
             if (_import.CallingMethod != null)
             {
                 sb.Append(" @ "u8);
-                sb.Append(nameMangler.GetMangledMethodName(_import.CallingMethod));
+                nameMangler.AppendMangledMethodName(_import.CallingMethod, ref sb);
             }
         }
 

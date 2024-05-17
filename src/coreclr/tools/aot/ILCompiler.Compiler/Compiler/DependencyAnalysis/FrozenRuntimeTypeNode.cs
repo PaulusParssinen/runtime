@@ -25,7 +25,7 @@ namespace ILCompiler.DependencyAnalysis
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__RuntimeType_"u8);
-            sb.Append(nameMangler.GetMangledTypeName(_type));
+            nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
         protected override int ContentSize => ObjectType.InstanceByteCount.AsInt;

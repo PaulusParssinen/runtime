@@ -31,28 +31,26 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            Utf8String identityString;
-            if (_identity is MethodDesc)
+            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.Append(_identityPrefix);
+
+            if (_identity is MethodDesc method)
             {
-                identityString = nameMangler.GetMangledMethodName((MethodDesc)_identity);
+                nameMangler.AppendMangledMethodName(method, ref sb);
             }
-            else if (_identity is TypeDesc)
+            else if (_identity is TypeDesc type)
             {
-                identityString = nameMangler.GetMangledTypeName((TypeDesc)_identity);
+                nameMangler.AppendMangledTypeName(type, ref sb);
             }
-            else if (_identity is FieldDesc)
+            else if (_identity is FieldDesc field)
             {
-                identityString = nameMangler.GetMangledFieldName((FieldDesc)_identity);
+                nameMangler.AppendMangledFieldName(field, ref sb);
             }
             else
             {
                 Debug.Assert(false);
-                identityString = new Utf8String("unknown");
+                sb.Append("unknown"u8);
             }
-
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append(_identityPrefix);
-            sb.Append(identityString);
         }
 
         public int Offset => 0;

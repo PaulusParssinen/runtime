@@ -249,14 +249,9 @@ namespace ILCompiler.DependencyAnalysis
 
         public override bool StaticDependenciesAreComputed => true;
 
-        public static string GetMangledName(TypeDesc type, NameMangler nameMangler)
-        {
-            return nameMangler.NodeMangler.MethodTable(type);
-        }
-
         public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.NodeMangler.MethodTable(_type));
+            nameMangler.NodeMangler.AppendMethodTable(_type, ref sb);
         }
 
         int ISymbolNode.Offset => 0;
@@ -1511,7 +1506,7 @@ namespace ILCompiler.DependencyAnalysis
             public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
             {
                 sb.Append("__writableData"u8);
-                sb.Append(nameMangler.GetMangledTypeName(_type.Type));
+                nameMangler.AppendMangledTypeName(_type.Type, ref sb);
             }
 
             public int Offset => 0;

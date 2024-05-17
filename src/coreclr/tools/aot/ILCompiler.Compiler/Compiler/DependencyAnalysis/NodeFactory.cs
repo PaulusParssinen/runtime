@@ -258,11 +258,11 @@ namespace ILCompiler.DependencyAnalysis
 
             _externSymbols = new NodeCache<string, ExternSymbolNode>((string name) =>
             {
-                return new ExternSymbolNode(name);
+                return new ExternSymbolNode(new Utf8String(name));
             });
             _externIndirectSymbols = new NodeCache<string, ExternSymbolNode>((string name) =>
             {
-                return new ExternSymbolNode(name, isIndirection: true);
+                return new ExternSymbolNode(new Utf8String(name), isIndirection: true);
             });
 
             _pInvokeModuleFixups = new NodeCache<PInvokeModuleData, PInvokeModuleFixupNode>((PInvokeModuleData moduleData) =>
@@ -752,7 +752,9 @@ namespace ILCompiler.DependencyAnalysis
             }
             else
             {
-                return ExternSymbol(NameMangler.NodeMangler.ThreadStaticsIndex(type));
+                var sb = new Utf8StringBuilder(stackalloc byte[256]);
+                NameMangler.NodeMangler.AppendThreadStaticsIndex(type, ref sb);
+                return ExternSymbol(sb.ToStringAndDispose());
             }
         }
 
@@ -1387,9 +1389,11 @@ namespace ILCompiler.DependencyAnalysis
             byte[] stringBytes = new byte[stringBytesCount + 1];
             Encoding.UTF8.GetBytes(str, 0, str.Length, stringBytes, 0);
 
-            string symbolName = "__utf8str_" + NameMangler.GetMangledStringName(str);
+            var sb = new Utf8StringBuilder(stackalloc byte[128]);
+            sb.Append("__utf8str_"u8);
+            NameMangler.AppendMangledStringName(str, ref sb);
 
-            return ReadOnlyDataBlob(symbolName, stringBytes, 1);
+            return ReadOnlyDataBlob(sb.ToUtf8StringAndDispose(), stringBytes, 1);
         }
 
         private NodeCache<DefType, DelegateMarshallingDataNode> _delegateMarshalingDataNodes;

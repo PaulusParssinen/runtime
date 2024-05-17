@@ -77,7 +77,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("DelegateCtor("u8);
-            sb.Append(nameMangler.GetMangledTypeName(_delegateType));
+            nameMangler.AppendMangledTypeName(_delegateType, ref sb);
             sb.Append(" -> "u8);
             _targetMethod.AppendMangledName(nameMangler, ref sb);
             sb.Append("; "u8);

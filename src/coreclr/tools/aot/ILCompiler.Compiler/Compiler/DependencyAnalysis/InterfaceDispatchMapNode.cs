@@ -33,7 +33,8 @@ namespace ILCompiler.DependencyAnalysis
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__InterfaceDispatchMap_"u8);
-            sb.Append(nameMangler.SanitizeName(nameMangler.GetMangledTypeName(_type)));
+            // TODO: There was nameMangler.AppendSanitizedName here for the type.. The mangled type name should already be sanitized.. right? Otherwise we have problems
+            nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
         public int Offset => 0;

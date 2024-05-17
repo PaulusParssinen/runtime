@@ -21,7 +21,7 @@ namespace ILCompiler.DependencyAnalysis
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__Str_"u8);
-            sb.Append(nameMangler.GetMangledStringName(_data));
+            nameMangler.AppendMangledStringName(_data, ref sb);
         }
 
         protected override int ContentSize => _stringType.Context.Target.PointerSize + sizeof(int) + (_data.Length + 1) * sizeof(char);

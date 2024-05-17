@@ -23,7 +23,7 @@ namespace ILCompiler.DependencyAnalysis
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__RuntimeFieldHandle_"u8);
-            sb.Append(nameMangler.GetMangledFieldName(_targetField));
+            nameMangler.AppendMangledFieldName(_targetField, ref sb);
         }
         public int Offset => 0;
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

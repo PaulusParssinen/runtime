@@ -25,7 +25,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.NodeMangler.ThreadStaticsIndex(_type));
+            nameMangler.NodeMangler.AppendThreadStaticsIndex(_type, ref sb);
         }
 
         public int Offset => 0;
