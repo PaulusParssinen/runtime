@@ -85,29 +85,29 @@ namespace ILCompiler.DependencyAnalysis
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
         public ReadyToRunHelperId Id => _id;
-        public object Target =>  _target;
+        public object Target => _target;
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             switch (_id)
             {
                 case ReadyToRunHelperId.GetNonGCStaticBase:
-                    sb.Append("__GetNonGCStaticBase_"u8);
+                    sb.AppendLiteral("__GetNonGCStaticBase_");
                     nameMangler.AppendMangledTypeName((TypeDesc)_target, ref sb);
                     break;
                 case ReadyToRunHelperId.GetGCStaticBase:
-                    sb.Append("__GetGCStaticBase_"u8);
+                    sb.AppendLiteral("__GetGCStaticBase_");
                     nameMangler.AppendMangledTypeName((TypeDesc)_target, ref sb);
                     break;
                 case ReadyToRunHelperId.GetThreadStaticBase:
-                    sb.Append("__GetThreadStaticBase_"u8);
+                    sb.AppendLiteral("__GetThreadStaticBase_");
                     nameMangler.AppendMangledTypeName((TypeDesc)_target, ref sb);
                     break;
                 case ReadyToRunHelperId.DelegateCtor:
                     ((DelegateCreationInfo)_target).AppendMangledName(nameMangler, ref sb);
                     break;
                 case ReadyToRunHelperId.ResolveVirtualFunction:
-                    sb.Append("__ResolveVirtualFunction_"u8);
+                    sb.AppendLiteral("__ResolveVirtualFunction_");
                     nameMangler.AppendMangledMethodName((MethodDesc)_target, ref sb);
                     break;
                 default:

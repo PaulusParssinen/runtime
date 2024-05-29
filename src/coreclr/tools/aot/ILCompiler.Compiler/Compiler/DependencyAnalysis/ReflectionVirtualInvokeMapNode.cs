@@ -30,7 +30,7 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__VirtualInvokeMap"u8);
+            sb.AppendLiteral("__VirtualInvokeMap");
         }
 
         int INodeWithSize.Size => _size.Value;

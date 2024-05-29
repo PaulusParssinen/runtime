@@ -16,7 +16,7 @@ namespace ILCompiler
     {
         public NameMangler NameMangler;
 
-        protected static ReadOnlySpan<byte> GenericDictionaryNamePrefix => "__GenericDict_"u8;
+        protected const string GenericDictionaryNamePrefix = "__GenericDict_";
 
         // Mangled name of boxed version of a type
         public abstract void AppendMangledBoxedTypeName(TypeDesc type, ref Utf8StringBuilder sb);
@@ -29,7 +29,7 @@ namespace ILCompiler
         public abstract void AppendTypeGenericDictionary(TypeDesc type, ref Utf8StringBuilder sb);
         public abstract void AppendMethodGenericDictionary(MethodDesc method, ref Utf8StringBuilder sb);
 
-        public abstract string ExternMethod(string unmangledName, MethodDesc method);
-        public abstract string ExternVariable(string unmangledName);
+        public abstract Utf8String ExternMethod(string unmangledName, MethodDesc method);
+        public abstract Utf8String ExternVariable(Utf8String unmangledName);
     }
 }

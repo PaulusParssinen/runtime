@@ -27,7 +27,7 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__fnptr_type_map"u8);
+            sb.AppendLiteral("__fnptr_type_map");
         }
         public int Offset => 0;
         public override bool IsShareable => false;

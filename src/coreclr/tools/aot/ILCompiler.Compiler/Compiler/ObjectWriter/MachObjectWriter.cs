@@ -111,7 +111,7 @@ namespace ILCompiler.ObjectWriter
             {
                 var machSymbol = new MachSymbol
                 {
-                    Name = $"lsection{sectionIndex}",
+                    Name = new Utf8String($"lsection{sectionIndex}"),
                     Section = section,
                     Value = section.VirtualAddress,
                     Descriptor = 0,
@@ -304,7 +304,7 @@ namespace ILCompiler.ObjectWriter
 
         private protected override void CreateSection(ObjectNodeSection section, Utf8String comdatName, Utf8String symbolName, Stream sectionStream)
         {
-            string segmentName = section.Name switch
+            string segmentName = section.Name.ToString() switch
             {
                 "rdata" => "__TEXT",
                 ".eh_frame" => "__TEXT",
@@ -316,7 +316,7 @@ namespace ILCompiler.ObjectWriter
                 }
             };
 
-            string sectionName = section.Name switch
+            string sectionName = section.Name.ToString() switch
             {
                 "text" => "__text",
                 "data" => "__data",
@@ -330,17 +330,17 @@ namespace ILCompiler.ObjectWriter
                 ".debug_str" => "__debug_str",
                 ".debug_line" => "__debug_line",
                 ".debug_loc" => "__debug_loc",
-                _ => section.Name
+                _ => section.Name.ToString()
             };
 
-            uint flags = section.Name switch
+            uint flags = section.Name.ToString() switch
             {
                 "bss" => S_ZEROFILL,
                 ".eh_frame" => S_COALESCED,
                 _ => section.Type == SectionType.Uninitialized ? S_ZEROFILL : S_REGULAR
             };
 
-            flags |= section.Name switch
+            flags |= section.Name.ToString() switch
             {
                 ".dotnet_eh_table" => S_ATTR_DEBUG,
                 ".eh_frame" => S_ATTR_LIVE_SUPPORT | S_ATTR_STRIP_STATIC_SYMS | S_ATTR_NO_TOC,
@@ -361,7 +361,7 @@ namespace ILCompiler.ObjectWriter
             int sectionIndex = _sections.Count;
             _sections.Add(machSection);
 
-            base.CreateSection(section, comdatName, symbolName ?? $"lsection{sectionIndex}", sectionStream);
+            base.CreateSection(section, comdatName, symbolName != default(Utf8String) ? symbolName : new Utf8String($"lsection{sectionIndex}"), sectionStream);
         }
 
         protected internal override void UpdateSectionAlignment(int sectionIndex, int alignment)
@@ -384,7 +384,7 @@ namespace ILCompiler.ObjectWriter
                 _sections[sectionIndex].IsDwarfSection)
             {
                 // DWARF section to DWARF section relocation
-                if (symbolName.AsSpan().StartsWith((byte)'.'))
+                if (symbolName.StartsWith('.'))
                 {
                     switch (relocType)
                     {
@@ -730,7 +730,7 @@ namespace ILCompiler.ObjectWriter
             void EmitCompactUnwindSymbol(Utf8String symbolName)
             {
                 Span<byte> tempBuffer = stackalloc byte[8];
-                if (symbolName != default)
+                if (symbolName != default(Utf8String))
                 {
                     SymbolDefinition symbol = definedSymbols[symbolName];
                     MachSection section = _sections[symbol.SectionIndex];
@@ -751,7 +751,7 @@ namespace ILCompiler.ObjectWriter
             }
         }
 
-        private protected override string AppendExternCName(string name) => "_" + name;
+        private protected override Utf8String AppendExternCName(Utf8String name) => new Utf8String("_" + name);
 
         // This represents the following DWARF code:
         //   DW_CFA_advance_loc: 4
@@ -790,8 +790,8 @@ namespace ILCompiler.ObjectWriter
             _compactUnwindCodes.Add(new CompactUnwindCode(
                 PcStartSymbolName: startSymbolName,
                 PcLength: (uint)length,
-                Code: encoding | (encoding != _compactUnwindDwarfCode && lsdaSymbolName != default ? 0x40000000u : 0), // UNWIND_HAS_LSDA
-                LsdaSymbolName: encoding != _compactUnwindDwarfCode ? lsdaSymbolName : default
+                Code: encoding | (encoding != _compactUnwindDwarfCode && lsdaSymbolName != default(Utf8String) ? 0x40000000u : 0), // UNWIND_HAS_LSDA
+                LsdaSymbolName: encoding != _compactUnwindDwarfCode ? lsdaSymbolName : default(Utf8String)
             ));
 
             return encoding != _compactUnwindDwarfCode;

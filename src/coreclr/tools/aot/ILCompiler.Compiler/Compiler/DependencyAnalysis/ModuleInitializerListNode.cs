@@ -20,7 +20,7 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__module_initializers"u8);
+            sb.AppendLiteral("__module_initializers");
         }
 
         public int Offset => 0;

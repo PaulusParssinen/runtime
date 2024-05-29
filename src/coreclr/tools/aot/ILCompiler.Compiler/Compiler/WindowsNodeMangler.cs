@@ -6,13 +6,14 @@ using Internal.Text;
 using Internal.TypeSystem;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ILCompiler
 {
     //
     // The naming format of these names is known to the debugger
     //
-    public class WindowsNodeMangler : NodeMangler
+    public sealed class WindowsNodeMangler : NodeMangler
     {
         private TargetDetails _target;
 
@@ -30,7 +31,7 @@ namespace ILCompiler
         public sealed override void AppendMangledBoxedTypeName(TypeDesc type, ref Utf8StringBuilder sb)
         {
             Debug.Assert(type.IsValueType);
-            sb.Append("Boxed_"u8);
+            sb.AppendLiteral("Boxed_");
             NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
@@ -40,65 +41,60 @@ namespace ILCompiler
             // This, along with LF_VTSHAPE debug records added by the object writer
             // is the debugger magic that allows debuggers to vcast types to their bases.
 
-            sb.Append("??_7"u8);
+            sb.AppendLiteral("??_7");
             if (type.IsValueType)
                 AppendMangledBoxedTypeName(type, ref sb);
             else
                 NameMangler.AppendMangledTypeName(type, ref sb);
-            sb.Append("@@6B@"u8);
+            sb.AppendLiteral("@@6B@");
         }
 
-        private void AppendStaticFieldName(TypeDesc type, ReadOnlySpan<byte> fieldName, ref Utf8StringBuilder sb)
+        private void AppendStaticFieldName(TypeDesc type, [ConstantExpected] string fieldName, ref Utf8StringBuilder sb)
         {
-            sb.Append('?');
-            sb.Append(fieldName);
-            sb.Append('@');
+            sb.AppendInterpolated($"?{fieldName}@");
             NameMangler.AppendMangledTypeName(type, ref sb);
-            sb.Append("@@"u8);
+            sb.AppendLiteral("@@");
         }
 
         public sealed override void AppendGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            AppendStaticFieldName(type, "__GCSTATICS"u8, ref sb);
+            AppendStaticFieldName(type, GCStaticMemberName, ref sb);
         }
 
         public sealed override void AppendNonGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            AppendStaticFieldName(type, "__NONGCSTATICS"u8, ref sb);
+            AppendStaticFieldName(type, NonGCStaticMemberName, ref sb);
         }
 
-        public sealed override void AppendThreadStatics(TypeDesc type, ref Utf8StringBuilder sb)
+        public sealed override void AppendThreadStatics(TypeDesc type, scoped ref Utf8StringBuilder sb)
         {
-            sb.Append('?');
-            sb.Append(NameMangler.CompilationUnitPrefix);
-            sb.Append(ThreadStaticMemberName);
-            sb.Append('@');
+            sb.AppendInterpolated($"?{NameMangler.CompilationUnitPrefix}{ThreadStaticMemberName}@");
             NameMangler.AppendMangledTypeName(type, ref sb);
-            sb.Append("@@"u8);
+            sb.AppendLiteral("@@");
         }
 
         public sealed override void AppendThreadStaticsIndex(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            AppendStaticFieldName(type, "__THREADSTATICINDEX"u8, ref sb);
+            AppendStaticFieldName(type, ThreadStaticIndexName, ref sb);
         }
 
         public sealed override void AppendTypeGenericDictionary(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            sb.Append(GenericDictionaryNamePrefix);
+            sb.AppendLiteral(GenericDictionaryNamePrefix);
             NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
         public sealed override void AppendMethodGenericDictionary(MethodDesc method, ref Utf8StringBuilder sb)
         {
-            sb.Append(GenericDictionaryNamePrefix);
+            sb.AppendLiteral(GenericDictionaryNamePrefix);
             NameMangler.AppendMangledMethodName(method, ref sb);
         }
 
-        public sealed override string ExternMethod(string unmangledName, MethodDesc method)
+        public sealed override Utf8String ExternMethod(string unmangledName, MethodDesc method)
         {
             if (_target.Architecture != TargetArchitecture.X86)
             {
-                return unmangledName;
+                return new Utf8String(unmangledName);
             }
 
             UnmanagedCallingConventions callConv;
@@ -116,7 +112,7 @@ namespace ILCompiler
             else
             {
                 Debug.Assert(method is Internal.TypeSystem.Ecma.EcmaMethod ecmaMethod && (ecmaMethod.GetRuntimeImportName() != null || ecmaMethod.GetRuntimeExportName() != null));
-                return unmangledName;
+                return new Utf8String(unmangledName);
             }
 
             int signatureBytes = 0;
@@ -125,23 +121,24 @@ namespace ILCompiler
                 signatureBytes += AlignmentHelper.AlignUp(p.GetElementSize().AsInt, _target.PointerSize);
             }
 
+            Span<byte> scratchBuffer = stackalloc byte[256];
             return callConv switch
             {
-                UnmanagedCallingConventions.Stdcall => $"_{unmangledName}@{signatureBytes}",
-                UnmanagedCallingConventions.Fastcall => $"@{unmangledName}@{signatureBytes}",
-                UnmanagedCallingConventions.Cdecl => $"_{unmangledName}",
+                UnmanagedCallingConventions.Stdcall => Utf8String.Create(scratchBuffer, $"_{unmangledName}@{signatureBytes}"),
+                UnmanagedCallingConventions.Fastcall => Utf8String.Create(scratchBuffer, $"@{unmangledName}@{signatureBytes}"),
+                UnmanagedCallingConventions.Cdecl => Utf8String.Create(scratchBuffer, $"_{unmangledName}"),
                 _ => throw new System.NotImplementedException()
             };
         }
 
-        public sealed override string ExternVariable(string unmangledName)
+        public sealed override Utf8String ExternVariable(Utf8String unmangledName)
         {
             if (_target.Architecture != TargetArchitecture.X86)
             {
                 return unmangledName;
             }
 
-            return $"_{unmangledName}";
+            return Utf8String.Create(stackalloc byte[128], $"_{unmangledName}");
         }
     }
 }

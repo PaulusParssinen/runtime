@@ -45,7 +45,7 @@ namespace ILCompiler.DependencyAnalysis
         {
             if (_type == null)
             {
-                sb.Append("_inlinedThreadStatics"u8);
+                sb.AppendLiteral("_inlinedThreadStatics");
             }
             else
             {

@@ -16,6 +16,8 @@ using Internal.TypeSystem;
 using Internal.ReadyToRunConstants;
 
 using Debug = System.Diagnostics.Debug;
+using System.Text.Unicode;
+using Internal.Text;
 
 namespace ILCompiler
 {
@@ -185,7 +187,7 @@ namespace ILCompiler
 
                 ISymbolNode entryPoint;
                 if (mangledName != null)
-                    entryPoint = _compilation.NodeFactory.ExternSymbol(mangledName);
+                    entryPoint = _compilation.NodeFactory.ExternSymbol(new Utf8String(mangledName)); // TODO:
                 else
                     entryPoint = _compilation.NodeFactory.MethodEntrypoint(methodDesc);
 

@@ -81,5 +81,13 @@ namespace ILCompiler.DependencyAnalysis
             symbolNode.AppendMangledName(nameMangler, ref sb);
             return sb.ToStringAndDispose();
         }
+
+        // TODO: Temporary
+        public static Utf8String GetMangledUtf8Name(this ISymbolNode symbolNode, NameMangler nameMangler)
+        {
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            symbolNode.AppendMangledName(nameMangler, ref sb);
+            return sb.ToUtf8StringAndDispose();
+        }
     }
 }

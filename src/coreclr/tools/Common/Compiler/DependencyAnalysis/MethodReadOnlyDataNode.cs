@@ -23,7 +23,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__readonlydata_"u8);
+            sb.AppendLiteral("__readonlydata_");
             nameMangler.AppendMangledMethodName(_owningMethod, ref sb);
         }
         public int Offset => 0;

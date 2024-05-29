@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics;
 using Internal.TypeSystem;
 using ILCompiler.DependencyAnalysis.ARM;
+using Internal.Text;
 
 namespace ILCompiler.DependencyAnalysis
 {
@@ -143,7 +144,7 @@ namespace ILCompiler.DependencyAnalysis
                             encoder.EmitDebugBreak();
 
                             encoder.EmitMOV(encoder.TargetRegister.Arg1, factory.InterfaceDispatchCell(targetMethod));
-                            encoder.EmitJMP(factory.ExternSymbol("RhpResolveInterfaceMethod"));
+                            encoder.EmitJMP(factory.ExternSymbol(new Utf8String("RhpResolveInterfaceMethod")));
                         }
                         else
                         {

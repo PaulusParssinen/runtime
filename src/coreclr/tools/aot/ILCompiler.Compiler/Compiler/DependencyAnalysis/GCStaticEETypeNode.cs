@@ -41,7 +41,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__GCStaticEEType_"u8);
+            sb.AppendLiteral("__GCStaticEEType_");
             sb.Append(_gcMap.ToString());
         }
 

@@ -192,7 +192,7 @@ namespace ILCompiler.DependencyAnalysis
             return factory.MethodEntrypoint(factory.TypeSystemContext.GetHelperEntryPoint("ThrowHelpers", "ThrowUnavailableType"));
         }
 
-        protected void AppendLookupSignatureMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        protected void AppendLookupSignatureMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             if (_id != ReadyToRunHelperId.DelegateCtor)
             {
@@ -336,13 +336,13 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__GenericLookupFromDict_"u8);
+            sb.AppendLiteral("__GenericLookupFromDict_");
             if (_dictionaryOwner is MethodDesc method)
                 nameMangler.AppendMangledMethodName(method, ref sb);
             else
                 nameMangler.AppendMangledTypeName((TypeDesc)_dictionaryOwner, ref sb);
             sb.Append('_');
-            AppendLookupSignatureMangledName(nameMangler, sb);
+            AppendLookupSignatureMangledName(nameMangler, ref sb);
         }
 
         public override int ClassCode => 1055354299;
@@ -357,13 +357,13 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__GenericLookupFromType_"u8);
+            sb.AppendLiteral("__GenericLookupFromType_");
             if (_dictionaryOwner is MethodDesc method)
                 nameMangler.AppendMangledMethodName(method, ref sb);
             else
                 nameMangler.AppendMangledTypeName((TypeDesc)_dictionaryOwner, ref sb);
             sb.Append('_');
-            AppendLookupSignatureMangledName(nameMangler, sb);
+            AppendLookupSignatureMangledName(nameMangler, ref sb);
         }
 
         public override int ClassCode => 913214059;

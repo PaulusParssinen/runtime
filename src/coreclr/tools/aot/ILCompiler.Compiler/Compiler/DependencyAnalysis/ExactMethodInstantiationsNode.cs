@@ -26,7 +26,7 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__exact_method_instantiations"u8);
+            sb.AppendLiteral("__exact_method_instantiations");
         }
 
         int INodeWithSize.Size => _size.Value;

@@ -17,7 +17,7 @@ namespace ILCompiler.ObjectWriter
 {
     internal sealed class DwarfBuilder : ITypesDebugInfoWriter
     {
-        private record struct SectionInfo(string SectionSymbolName, ulong Size);
+        private record struct SectionInfo(Utf8String SectionSymbolName, ulong Size);
         private record struct MemberFunctionTypeInfo(MemberFunctionTypeDescriptor MemberDescriptor, uint[] ArgumentTypes, bool IsStatic);
         public delegate (Utf8String SectionSymbolName, long Address) ResolveStaticVariable(Utf8String name);
 
@@ -137,12 +137,12 @@ namespace ILCompiler.ObjectWriter
                 // Unit type, Address Size
                 infoSectionWriter.Write([DW_UT_compile, _targetPointerSize]);
                 // Abbrev offset
-                infoSectionWriter.EmitSymbolReference(RelocType.IMAGE_REL_BASED_HIGHLOW, ".debug_abbrev", 0);
+                infoSectionWriter.EmitSymbolReference(RelocType.IMAGE_REL_BASED_HIGHLOW, new Utf8String(".debug_abbrev"u8), 0);
             }
             else
             {
                 // Abbrev offset
-                infoSectionWriter.EmitSymbolReference(RelocType.IMAGE_REL_BASED_HIGHLOW, ".debug_abbrev", 0);
+                infoSectionWriter.EmitSymbolReference(RelocType.IMAGE_REL_BASED_HIGHLOW, new Utf8String(".debug_abbrev"u8), 0);
                 // Address Size
                 infoSectionWriter.Write([_targetPointerSize]);
             }
@@ -196,7 +196,7 @@ namespace ILCompiler.ObjectWriter
                 foreach (DwarfStaticVariableInfo staticField in _staticFields)
                 {
                     (Utf8String sectionSymbolName, long address) = resolveStaticVariable(staticField.Name);
-                    if (sectionSymbolName != default)
+                    if (sectionSymbolName != default(Utf8String))
                     {
                         staticField.Dump(dwarfInfoWriter, sectionSymbolName, address);
                     }
@@ -236,7 +236,7 @@ namespace ILCompiler.ObjectWriter
             // Version
             arangeSectionWriter.WriteLittleEndian<ushort>(2);
             // Debug Info Offset
-            arangeSectionWriter.EmitSymbolReference(RelocType.IMAGE_REL_BASED_HIGHLOW, ".debug_info", 0);
+            arangeSectionWriter.EmitSymbolReference(RelocType.IMAGE_REL_BASED_HIGHLOW, new Utf8String(".debug_info"u8), 0);
             // Address size, Segment selector size
             arangeSectionWriter.Write([_targetPointerSize, 0]);
             // Ranges have to be aligned
@@ -487,7 +487,7 @@ namespace ILCompiler.ObjectWriter
             }
         }
 
-        public void EmitSectionInfo(string sectionSymbolName, ulong size)
+        public void EmitSectionInfo(Utf8String sectionSymbolName, ulong size)
         {
             _sections.Add(new SectionInfo(sectionSymbolName, size));
         }

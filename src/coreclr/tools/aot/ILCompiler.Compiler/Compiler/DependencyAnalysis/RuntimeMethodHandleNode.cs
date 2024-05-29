@@ -28,7 +28,7 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__RuntimeMethodHandle_"u8);
+            sb.AppendLiteral("__RuntimeMethodHandle_");
             nameMangler.AppendMangledMethodName(_targetMethod, ref sb);
         }
         public int Offset => 0;
@@ -66,7 +66,7 @@ namespace ILCompiler.DependencyAnalysis
             return dependencies;
         }
 
-        private static readonly Utf8String s_NativeLayoutSignaturePrefix = new Utf8String("__RMHSignature_");
+        private static readonly Utf8String s_NativeLayoutSignaturePrefix = new Utf8String("__RMHSignature_"u8);
 
         protected override ObjectData GetDehydratableData(NodeFactory factory, bool relocsOnly = false)
         {

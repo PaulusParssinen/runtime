@@ -306,20 +306,20 @@ namespace ILCompiler
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__DelegateCtor_"u8);
+            sb.AppendLiteral("__DelegateCtor_");
             if (TargetNeedsVTableLookup)
-                sb.Append("FromVtbl_"u8);
+                sb.AppendLiteral("FromVtbl_");
             Constructor.AppendMangledName(nameMangler, ref sb);
-            sb.Append("__"u8);
+            sb.AppendLiteral("__");
             nameMangler.AppendMangledMethodName(_targetMethod, ref sb);
             if (_constrainedType != null)
             {
-                sb.Append("__"u8);
+                sb.AppendLiteral("__");
                 nameMangler.AppendMangledTypeName(_constrainedType, ref sb);
             }
             if (Thunk != null)
             {
-                sb.Append("__"u8);
+                sb.AppendLiteral("__");
                 Thunk.AppendMangledName(nameMangler, ref sb);
             }
         }

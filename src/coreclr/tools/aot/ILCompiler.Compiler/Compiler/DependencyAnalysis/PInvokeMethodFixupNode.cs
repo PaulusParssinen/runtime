@@ -29,7 +29,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__pinvoke_"u8);
+            sb.AppendLiteral("__pinvoke_");
             _pInvokeMethodData.AppendMangledName(nameMangler, ref sb);
         }
         public int Offset => 0;
@@ -230,11 +230,11 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             ModuleData.AppendMangledName(nameMangler, ref sb);
-            sb.Append("__"u8);
+            sb.AppendLiteral("__");
             sb.Append(EntryPointName);
             if (CharSetMangling != default)
             {
-                sb.Append("__"u8);
+                sb.AppendLiteral("__");
                 sb.Append(CharSetMangling.ToString());
             }
             if (SignatureBytes >= 0)

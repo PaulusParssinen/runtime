@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -69,7 +70,7 @@ namespace ILCompiler
 
         private string GetSanitizedNameWithHash(string literal)
         {
-            var sb = new Utf8StringBuilder(stackalloc byte[64]);
+            var sb = new Utf8StringBuilder(stackalloc byte[128]);
             AppendSanitizedNameWithHash(literal, ref sb);
             return sb.ToStringAndDispose();
         }
@@ -85,7 +86,7 @@ namespace ILCompiler
                 sb.Truncate(newLength: sanitizedNameStart + 30);
 
             // If the name was changed during sanitization, append SHA-256 hash of the original name to the sanitized name
-            if (sb.AsSpan(sanitizedNameStart).SequenceEqual(Encoding.UTF8.GetBytes(literal)))
+            if (!sb.AsSpan(sanitizedNameStart).SequenceEqual(Encoding.UTF8.GetBytes(literal)))
             {
                 Span<byte> hashBuffer = stackalloc byte[SHA256.HashSizeInBytes];
 
@@ -113,12 +114,12 @@ namespace ILCompiler
         /// <remarks>
         /// The hashing is done with <see cref="Utf8String.GetHashCode(ReadOnlySpan{byte})"/>
         /// </remarks>
-        /// <param name="name">Name as UTF-8 bytes to disambiguate.</param>
+        /// <param name="name">Name as UTF-8 encoded bytes to disambiguate.</param>
         /// <param name="nameCounts">The dictionary mapping a hash of name to number of times it has been encountered.</param>
         /// <param name="sb">The string builder to append the number suffix to.</param>
         private static void AppendDisambiguatingNameSuffix(ReadOnlySpan<byte> name, Dictionary<int, int> nameCounts, ref Utf8StringBuilder sb)
         {
-            int nameHash = Utf8String.GetHashCode(name);
+            int nameHash = Utf8String.GetHashCode(name); // TODO: IAlternateLookup?
 
             // Try to insert the name into the deduplication dictionary with default value (0)
             ref int count = ref CollectionsMarshal.GetValueRefOrAddDefault(nameCounts, nameHash, out bool exists);
@@ -214,7 +215,7 @@ namespace ILCompiler
                 AppendSanitizedName(assemblyName, ref moduleNameBuilder);
                 moduleNameBuilder.Append('_');
 
-                int assemblyNameEnd = sb.Length;
+                int assemblyNameEnd = moduleNameBuilder.Length;
 
                 var nameCounts = new Dictionary<int, int>();
 
@@ -245,28 +246,32 @@ namespace ILCompiler
                                 TypeFlags.Single => "Single"u8,
                                 TypeFlags.IntPtr => "IntPtr"u8,
                                 TypeFlags.UIntPtr => "UIntPtr"u8,
-                                _ when !moduleType.IsObject => "String"u8,
 
-                                _ => "Object"u8
+                                _ when moduleType.IsString => "String"u8,
+                                _ when moduleType.IsObject => "Object"u8,
+
+                                _ => []
                             };
 
-                            // We know this won't conflict because all the other types are
-                            // prefixed by the assembly name.
-                            _mangledTypeNames.Add(moduleType, new Utf8String(wellKnownName.ToArray()));
+                            if (!wellKnownName.IsEmpty)
+                            {
+                                // We know this won't conflict because all the other types are
+                                // prefixed by the assembly name.
+                                _mangledTypeNames.Add(moduleType, new Utf8String(wellKnownName.ToArray()));
+                                continue;
+                            }
                         }
-                        else
-                        {
-                            // Include encapsulating type
-                            AppendEncapsulatingTypeName(moduleType, ref moduleNameBuilder);
 
-                            // Ensure that name is unique by prepending a number suffix if needed and update our tables accordingly.
-                            AppendDisambiguatingNameSuffix(moduleNameBuilder.AsSpan(assemblyNameEnd), nameCounts, ref moduleNameBuilder);
+                        // Include encapsulating type
+                        AppendEncapsulatingTypeName(moduleType, ref moduleNameBuilder);
 
-                            _mangledTypeNames.Add(moduleType, moduleNameBuilder.ToUtf8String());
+                        // Ensure that name is unique by appending a number suffix if needed and update our tables accordingly.
+                        AppendDisambiguatingNameSuffix(moduleNameBuilder.AsSpan(assemblyNameEnd), nameCounts, ref moduleNameBuilder);
 
-                            // Truncate to the assembly name
-                            sb.Truncate(newLength: assemblyNameEnd);
-                        }
+                        _mangledTypeNames.Add(moduleType, moduleNameBuilder.ToUtf8String());
+
+                        // Truncate to the assembly name for next iteration
+                        moduleNameBuilder.Truncate(newLength: assemblyNameEnd);
                     }
 
                     moduleNameBuilder.Dispose();
@@ -276,14 +281,16 @@ namespace ILCompiler
                     {
                         sb.Append(mangledName);
                         return;
-                    };
+                    }
                 }
             }
+
+            int typeNameStart = sb.Length;
 
             switch (type)
             {
                 case ArrayType arrayType when type.Category is TypeFlags.Array:
-                    sb.Append("__MDArray"u8);
+                    sb.AppendLiteral("__MDArray");
 
                     sb.Append(EnterNameScopeSequence);
                     AppendMangledTypeName(arrayType.ElementType, ref sb);
@@ -292,22 +299,22 @@ namespace ILCompiler
                     sb.Append(ExitNameScopeSequence);
                     break;
                 case ArrayType arrayType when type.Category is TypeFlags.SzArray:
-                    sb.Append("__Array"u8);
+                    sb.AppendLiteral("__Array");
                     sb.Append(EnterNameScopeSequence);
                     AppendMangledTypeName(arrayType.ElementType, ref sb);
                     sb.Append(ExitNameScopeSequence);
                     break;
                 case ByRefType byRefType:
                     AppendMangledTypeName(byRefType.ParameterType, ref sb);
-                    sb.Append("<ByRef>"u8);
+                    sb.AppendLiteral("<ByRef>");
                     break;
                 case PointerType pointerType:
                     AppendMangledTypeName(pointerType.ParameterType, ref sb);
-                    sb.Append("<Pointer>"u8);
+                    sb.AppendLiteral("<Pointer>");
                     break;
                 case FunctionPointerType fnPtrType:
-                    sb.Append("__FnPtr_"u8);
-                    sb.AppendInvariant((int)fnPtrType.Signature.Flags, format: "X2");
+                    sb.AppendInterpolated($"__FnPtr_{(int)fnPtrType.Signature.Flags:X2}");
+
                     sb.Append(EnterNameScopeSequence);
                     AppendMangledTypeName(fnPtrType.Signature.ReturnType, ref sb);
 
@@ -343,7 +350,7 @@ namespace ILCompiler
                         for (int i = 0; i < inst.Length; i++)
                         {
                             if (i > 0)
-                                sb.Append("__"u8);
+                                sb.AppendLiteral("__");
 
                             AppendMangledTypeName(inst[i], ref sb);
                         }
@@ -362,7 +369,7 @@ namespace ILCompiler
             lock (this)
             {
                 // Ensure that name is unique and update our tables accordingly
-                _mangledTypeNames.TryAdd(type, sb.ToUtf8String());
+                _mangledTypeNames.TryAdd(type, new Utf8String(sb.AsSpan(typeNameStart)));
             }
         }
 
@@ -387,13 +394,15 @@ namespace ILCompiler
                 }
             }
 
+            int methodNameStart = sb.Length;
+
             AppendMangledTypeName(method.OwningType, ref sb);
-            sb.Append("__"u8);
+            sb.AppendLiteral("__");
             AppendUnqualifiedMangledMethodName(method, ref sb);
 
             lock (this)
             {
-                _mangledMethodNames.TryAdd(method, sb.ToUtf8String());
+                _mangledMethodNames.TryAdd(method, new Utf8String(sb.AsSpan(methodNameStart)));
             }
         }
 
@@ -407,7 +416,7 @@ namespace ILCompiler
         {
             AppendNestedMangledName(prefixMangledSignature.Prefix, ref sb);
 
-            var signature = prefixMangledSignature.BaseSignature;
+            MethodSignature signature = prefixMangledSignature.BaseSignature;
             sb.AppendInvariant((int)signature.Flags);
 
             sb.Append(EnterNameScopeSequence);
@@ -416,7 +425,7 @@ namespace ILCompiler
 
             for (int i = 0; i < signature.Length; i++)
             {
-                sb.Append("__"u8);
+                sb.AppendLiteral("__");
                 AppendMangledTypeName(signature[i], ref sb); // sigArgName
             }
 
@@ -482,7 +491,7 @@ namespace ILCompiler
                 for (int i = 0; i < inst.Length; i++)
                 {
                     if (i > 0)
-                        sb.Append("__"u8);
+                        sb.AppendLiteral("__");
                     AppendMangledTypeName(inst[i], ref sb); // instArgName
                 }
 
@@ -542,7 +551,7 @@ namespace ILCompiler
                 var fieldNameBuilder = new Utf8StringBuilder(stackalloc byte[256]);
 
                 AppendMangledTypeName(field.OwningType, ref fieldNameBuilder); // TODO: Was prependTypeName. This could be null? I don't think so..
-                sb.Append("__"u8);
+                sb.AppendLiteral("__");
 
                 var nameCounts = new Dictionary<int, int>();
 
@@ -576,7 +585,7 @@ namespace ILCompiler
 
             // TODO: if (prependTypeName != null)
             {
-                sb.Append("__"u8);
+                sb.AppendLiteral("__");
                 AppendSanitizedName(field.Name, ref sb);
             }
 
@@ -599,11 +608,13 @@ namespace ILCompiler
                 }
             }
 
+            int literalStart = sb.Length;
+
             AppendSanitizedNameWithHash(literal, ref sb);
 
             lock (this)
             {
-                _mangledStringLiterals.TryAdd(literal, sb.ToUtf8String());
+                _mangledStringLiterals.TryAdd(literal, new Utf8String(sb.AsSpan(literalStart).ToArray()));
             }
         }
     }

@@ -20,7 +20,7 @@ namespace ILCompiler.DependencyAnalysis
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__Str_"u8);
+            sb.AppendLiteral("__Str_");
             nameMangler.AppendMangledStringName(_data, ref sb);
         }
 

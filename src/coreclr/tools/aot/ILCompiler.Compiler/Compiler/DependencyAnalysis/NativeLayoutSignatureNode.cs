@@ -49,7 +49,7 @@ namespace ILCompiler.DependencyAnalysis
             else
             {
                 Debug.Assert(false);
-                sb.Append("unknown"u8);
+                sb.AppendLiteral("unknown");
             }
         }
 
