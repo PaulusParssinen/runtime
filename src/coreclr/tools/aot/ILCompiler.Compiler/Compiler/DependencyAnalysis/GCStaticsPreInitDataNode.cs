@@ -29,7 +29,7 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             nameMangler.NodeMangler.AppendGCStatics(_preinitializationInfo.Type, ref sb);
-            sb.Append("__PreInitData"u8);
+            sb.AppendLiteral("__PreInitData");
         }
 
         public int Offset => 0;

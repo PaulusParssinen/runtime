@@ -256,9 +256,9 @@ namespace ILCompiler.DependencyAnalysis
                 return new FieldRvaDataNode(key);
             });
 
-            _externSymbols = new NodeCache<string, ExternSymbolNode>((string name) =>
+            _externSymbols = new NodeCache<Utf8String, ExternSymbolNode>((Utf8String name) =>
             {
-                return new ExternSymbolNode(new Utf8String(name));
+                return new ExternSymbolNode(name);
             });
             _externIndirectSymbols = new NodeCache<string, ExternSymbolNode>((string name) =>
             {
@@ -754,7 +754,7 @@ namespace ILCompiler.DependencyAnalysis
             {
                 var sb = new Utf8StringBuilder(stackalloc byte[256]);
                 NameMangler.NodeMangler.AppendThreadStaticsIndex(type, ref sb);
-                return ExternSymbol(sb.ToStringAndDispose());
+                return ExternSymbol(sb.ToUtf8StringAndDispose());
             }
         }
 
@@ -856,16 +856,16 @@ namespace ILCompiler.DependencyAnalysis
             return _genericVariances.GetOrAdd(details);
         }
 
-        private NodeCache<string, ExternSymbolNode> _externSymbols;
+        private NodeCache<Utf8String, ExternSymbolNode> _externSymbols;
 
-        public ISortableSymbolNode ExternSymbol(string name)
+        public ISortableSymbolNode ExternSymbol(Utf8String name)
         {
             return _externSymbols.GetOrAdd(name);
         }
 
-        public ISortableSymbolNode ExternVariable(string name)
+        public ISortableSymbolNode ExternVariable(Utf8String name)
         {
-            string mangledName = NameMangler.NodeMangler.ExternVariable(name);
+            Utf8String mangledName = NameMangler.NodeMangler.ExternVariable(name);
             return _externSymbols.GetOrAdd(mangledName);
         }
 
@@ -1390,7 +1390,7 @@ namespace ILCompiler.DependencyAnalysis
             Encoding.UTF8.GetBytes(str, 0, str.Length, stringBytes, 0);
 
             var sb = new Utf8StringBuilder(stackalloc byte[128]);
-            sb.Append("__utf8str_"u8);
+            sb.AppendLiteral("__utf8str_");
             NameMangler.AppendMangledStringName(str, ref sb);
 
             return ReadOnlyDataBlob(sb.ToUtf8StringAndDispose(), stringBytes, 1);
@@ -1414,11 +1414,11 @@ namespace ILCompiler.DependencyAnalysis
         /// Returns alternative symbol name that object writer should produce for given symbols
         /// in addition to the regular one.
         /// </summary>
-        public string GetSymbolAlternateName(ISymbolNode node)
+        public Utf8String GetSymbolAlternateName(ISymbolNode node)
         {
-            string value;
+            Utf8String value;
             if (!NodeAliases.TryGetValue(node, out value))
-                return null;
+                return default;
             return value;
         }
 
@@ -1442,7 +1442,11 @@ namespace ILCompiler.DependencyAnalysis
 
         public ReadyToRunHeaderNode ReadyToRunHeader;
 
-        public Dictionary<ISymbolNode, string> NodeAliases = new Dictionary<ISymbolNode, string>();
+        /// <summary>
+        /// Alternative symbol names that object writer should produce for given symbol node
+        /// in addition to the regular name.
+        /// </summary>
+        public Dictionary<ISymbolNode, Utf8String> NodeAliases = new Dictionary<ISymbolNode, Utf8String>();
 
         protected internal TypeManagerIndirectionNode TypeManagerIndirection = new TypeManagerIndirectionNode();
 

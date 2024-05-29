@@ -72,8 +72,8 @@ namespace ILCompiler.ObjectWriter
 
         private protected override void CreateSection(ObjectNodeSection section, Utf8String comdatName, Utf8String symbolName, Stream sectionStream)
         {
-            string sectionName = section.Name.Equals("rdata"u8) ? ".rodata" :
-                (section.Name.StartsWith('_') || section.Name.StartsWith('.') ? section.Name : "." + section.Name);
+            Utf8String sectionName = section.Name.Equals("rdata"u8) ? new Utf8String(".rodata"u8) :
+                (section.Name.StartsWith('_') || section.Name.StartsWith('.') ? section.Name : new Utf8String("." + section.Name));
             int sectionIndex = _sections.Count;
             uint type = 0;
             uint flags = 0;
@@ -105,12 +105,12 @@ namespace ILCompiler.ObjectWriter
                 {
                     SectionType.Executable => SHF_ALLOC | SHF_EXECINSTR,
                     SectionType.Writeable => SHF_ALLOC | SHF_WRITE,
-                    SectionType.Debug => sectionName == ".debug_str" ? SHF_MERGE | SHF_STRINGS : 0,
+                    SectionType.Debug => sectionName.Equals(".debug_str"u8) ? SHF_MERGE | SHF_STRINGS : 0,
                     _ => SHF_ALLOC,
                 };
             }
 
-            if (comdatName != default)
+            if (comdatName != default(Utf8String))
             {
                 flags |= SHF_GROUP;
                 if (!_comdatNameToElfSection.TryGetValue(comdatName, out groupSection))
@@ -124,7 +124,7 @@ namespace ILCompiler.ObjectWriter
                             Alignment = 4,
                             EntrySize = (uint)sizeof(uint),
                         },
-                        Name = ".group",
+                        Name = new Utf8String(".group"u8),
                         Stream = new MemoryStream(5 * sizeof(uint)),
                     };
 
@@ -150,7 +150,7 @@ namespace ILCompiler.ObjectWriter
             });
 
             // Emit section symbol into symbol table (for COMDAT the defining symbol is section symbol)
-            if (comdatName == default)
+            if (comdatName == default(Utf8String))
             {
                 _symbolNameToIndex[sectionName] = (uint)_symbols.Count;
                 _symbols.Add(new ElfSymbol
@@ -166,11 +166,11 @@ namespace ILCompiler.ObjectWriter
                 {
                     Section = _sections[sectionIndex],
                     Info = STT_NOTYPE,
-                    Name = $"$t.{sectionIndex}"
+                    Name = new Utf8String($"$t.{sectionIndex}")
                 });
             }
 
-            base.CreateSection(section, comdatName, symbolName != default ? symbolName : sectionName, sectionStream);
+            base.CreateSection(section, comdatName, symbolName != default(Utf8String) ? symbolName : sectionName, sectionStream);
         }
 
         protected internal override void UpdateSectionAlignment(int sectionIndex, int alignment)
@@ -285,7 +285,7 @@ namespace ILCompiler.ObjectWriter
                     {
                         sortedSymbols.Add(new ElfSymbol
                         {
-                            Name = $"{externSymbol}$thunk",
+                            Name = new Utf8String($"{externSymbol}$thunk"),
                             Value = (ulong)((thunkSymbolsIndex * 4) | 1u),
                             Size = 4u,
                             Section = _sections[thunkSectionIndex],
@@ -320,7 +320,7 @@ namespace ILCompiler.ObjectWriter
                 _sections[thunkSectionWriter.SectionIndex].RelocationStream = relocationStream;
                 foreach (Utf8String externSymbol in undefinedSymbols)
                 {
-                    if (_symbolNameToIndex.TryGetValue($"{externSymbol}$thunk", out uint thunkSymbolIndex))
+                    if (_symbolNameToIndex.TryGetValue(new Utf8String($"{externSymbol}$thunk"), out uint thunkSymbolIndex))
                     {
                         // Write the relocation to external symbol for the thunk
                         BinaryPrimitives.WriteUInt32LittleEndian(relocationEntry, (uint)thunkSectionWriter.Position);
@@ -337,7 +337,7 @@ namespace ILCompiler.ObjectWriter
             }
 
             // Update group sections links
-            foreach ((string comdatName, ElfSectionDefinition groupSection) in _comdatNameToElfSection)
+            foreach ((Utf8String comdatName, ElfSectionDefinition groupSection) in _comdatNameToElfSection)
             {
                 groupSection.SectionHeader.Info = (uint)_symbolNameToIndex[comdatName];
             }
@@ -590,8 +590,8 @@ namespace ILCompiler.ObjectWriter
 
                 if (ShouldShareSymbol((ObjectNode)nodeWithCodeInfo))
                 {
-                    exidxSectionWriter = GetOrCreateSection(ArmUnwindIndexSection, currentSymbolName, $"_unwind0{currentSymbolName}");
-                    extabSectionWriter = GetOrCreateSection(ArmUnwindTableSection, currentSymbolName, $"_extab0{currentSymbolName}");
+                    exidxSectionWriter = GetOrCreateSection(ArmUnwindIndexSection, currentSymbolName, new Utf8String($"_unwind0{currentSymbolName}"));
+                    extabSectionWriter = GetOrCreateSection(ArmUnwindTableSection, currentSymbolName, new Utf8String($"_extab0{currentSymbolName}"));
                     _sections[exidxSectionWriter.SectionIndex].LinkSection = _sections[sectionWriter.SectionIndex];
                 }
                 else
@@ -604,7 +604,7 @@ namespace ILCompiler.ObjectWriter
                     }
                     else
                     {
-                        string sectionName = _sections[sectionWriter.SectionIndex].Name;
+                        Utf8String sectionName = _sections[sectionWriter.SectionIndex].Name;
                         exidxSectionWriter = GetOrCreateSection(new ObjectNodeSection($"{ArmUnwindIndexSection.Name}{sectionName}", ArmUnwindIndexSection.Type));
                         extabSectionWriter = GetOrCreateSection(new ObjectNodeSection($"{ArmUnwindTableSection.Name}{sectionName}", ArmUnwindTableSection.Type));
                         _sections[exidxSectionWriter.SectionIndex].LinkSection = _sections[sectionWriter.SectionIndex];
@@ -621,8 +621,8 @@ namespace ILCompiler.ObjectWriter
                     int end = frameInfo.EndOffset;
                     byte[] blob = frameInfo.BlobData;
 
-                    string framSymbolName = $"_fram{i}{currentSymbolName}";
-                    string extabSymbolName = $"_extab{i}{currentSymbolName}";
+                    Utf8String framSymbolName = new Utf8String($"_fram{i}{currentSymbolName}");
+                    Utf8String extabSymbolName = new Utf8String($"_extab{i}{currentSymbolName}");
 
                     sectionWriter.EmitSymbolDefinition(framSymbolName, start);
 
@@ -631,11 +631,11 @@ namespace ILCompiler.ObjectWriter
                     exidxSectionWriter.EmitSymbolReference(IMAGE_REL_ARM_PREL31, extabSymbolName);
 
                     Span<byte> armUnwindInfo = EabiUnwindConverter.ConvertCFIToEabi(blob);
-                    string personalitySymbolName;
+                    Utf8String personalitySymbolName;
 
                     if (armUnwindInfo.Length <= 3)
                     {
-                        personalitySymbolName = "__aeabi_unwind_cpp_pr0";
+                        personalitySymbolName = new Utf8String("__aeabi_unwind_cpp_pr0"u8);
                         unwindWord[3] = 0x80;
                         unwindWord[2] = (byte)(armUnwindInfo.Length > 0 ? armUnwindInfo[0] : 0xB0);
                         unwindWord[1] = (byte)(armUnwindInfo.Length > 1 ? armUnwindInfo[1] : 0xB0);
@@ -645,7 +645,7 @@ namespace ILCompiler.ObjectWriter
                     else
                     {
                         Debug.Assert(armUnwindInfo.Length <= 1024);
-                        personalitySymbolName = "__aeabi_unwind_cpp_pr1";
+                        personalitySymbolName = new Utf8String("__aeabi_unwind_cpp_pr1"u8);
                         unwindWord[3] = 0x81;
                         unwindWord[2] = (byte)(((armUnwindInfo.Length - 2) + 3) / 4);
                         unwindWord[1] = armUnwindInfo[0];
@@ -711,14 +711,14 @@ namespace ILCompiler.ObjectWriter
             _sections.Add(new ElfSectionDefinition
             {
                 SectionHeader = new ElfSectionHeader { Type = SHT_PROGBITS },
-                Name = ".note.GNU-stack",
+                Name = new Utf8String(".note.GNU-stack"u8),
                 Stream = Stream.Null,
             });
 
             // Reserve all symbol names
             foreach (var symbol in _symbols)
             {
-                if (symbol.Name is not null)
+                if (symbol.Name != default(Utf8String))
                 {
                     _stringTable.ReserveString(symbol.Name);
                 }
@@ -749,7 +749,7 @@ namespace ILCompiler.ObjectWriter
 
                 if (section.RelocationStream != Stream.Null)
                 {
-                    _stringTable.ReserveString((_useInlineRelocationAddends ? ".rel" : ".rela") + section.Name);
+                    _stringTable.ReserveString(new Utf8String((_useInlineRelocationAddends ? ".rel" : ".rela") + section.Name));
                     sectionCount++;
                 }
 
@@ -763,11 +763,11 @@ namespace ILCompiler.ObjectWriter
             }
 
             // Reserve names for the predefined sections
-            _stringTable.ReserveString(".strtab");
-            _stringTable.ReserveString(".symtab");
+            _stringTable.ReserveString(new Utf8String(".strtab"u8));
+            _stringTable.ReserveString(new Utf8String(".symtab"u8));
             if (sectionCount >= SHN_LORESERVE)
             {
-                _stringTable.ReserveString(".symtab_shndx");
+                _stringTable.ReserveString(new Utf8String(".symtab_shndx"u8));
                 hasSymTabExtendedIndices = true;
             }
 
@@ -880,7 +880,7 @@ namespace ILCompiler.ObjectWriter
                 {
                     ElfSectionHeader relaSectionHeader = new ElfSectionHeader
                     {
-                        NameIndex = _stringTable.GetStringOffset((_useInlineRelocationAddends ? ".rel" : ".rela") + section.Name),
+                        NameIndex = _stringTable.GetStringOffset(new Utf8String((_useInlineRelocationAddends ? ".rel" : ".rela") + section.Name)),
                         Type = _useInlineRelocationAddends ? SHT_REL : SHT_RELA,
                         Flags = (section.GroupSection is not null ? SHF_GROUP : 0u) | SHF_INFO_LINK,
                         Address = 0u,
@@ -898,7 +898,7 @@ namespace ILCompiler.ObjectWriter
             // String table section
             ElfSectionHeader stringTableSectionHeader = new ElfSectionHeader
             {
-                NameIndex = _stringTable.GetStringOffset(".strtab"),
+                NameIndex = _stringTable.GetStringOffset(new Utf8String(".strtab"u8)),
                 Type = SHT_STRTAB,
                 Flags = 0u,
                 Address = 0u,
@@ -914,7 +914,7 @@ namespace ILCompiler.ObjectWriter
             // Symbol table section
             ElfSectionHeader symbolTableSectionHeader = new ElfSectionHeader
             {
-                NameIndex = _stringTable.GetStringOffset(".symtab"),
+                NameIndex = _stringTable.GetStringOffset(new Utf8String(".symtab"u8)),
                 Type = SHT_SYMTAB,
                 Flags = 0u,
                 Address = 0u,
@@ -934,7 +934,7 @@ namespace ILCompiler.ObjectWriter
             {
                 ElfSectionHeader sectionHeader = new ElfSectionHeader
                 {
-                    NameIndex = _stringTable.GetStringOffset(".symtab_shndx"),
+                    NameIndex = _stringTable.GetStringOffset(new Utf8String(".symtab_shndx"u8)),
                     Type = SHT_SYMTAB_SHNDX,
                     Flags = 0u,
                     Address = 0u,
@@ -1107,7 +1107,7 @@ namespace ILCompiler.ObjectWriter
                     (ushort)SHN_XINDEX :
                     (Section is not null ? (ushort)Section.SectionIndex : (ushort)0u);
 
-                BinaryPrimitives.WriteUInt32LittleEndian(buffer, Name is not null ? stringTable.GetStringOffset(Name) : 0);
+                BinaryPrimitives.WriteUInt32LittleEndian(buffer, Name != default(Utf8String) ? stringTable.GetStringOffset(Name) : 0);
                 if (typeof(TSize) == typeof(uint))
                 {
                     TSize.CreateChecked(Value).WriteLittleEndian(buffer.Slice(4));
@@ -1134,7 +1134,7 @@ namespace ILCompiler.ObjectWriter
             public ElfStringTable()
             {
                 // Always start the table with empty string
-                GetStringOffset("");
+                GetStringOffset(new Utf8String([]));
             }
         }
     }

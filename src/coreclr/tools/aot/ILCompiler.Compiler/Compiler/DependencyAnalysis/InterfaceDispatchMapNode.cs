@@ -32,7 +32,7 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__InterfaceDispatchMap_"u8);
+            sb.AppendLiteral("__InterfaceDispatchMap_");
             // TODO: There was nameMangler.AppendSanitizedName here for the type.. The mangled type name should already be sanitized.. right? Otherwise we have problems
             nameMangler.AppendMangledTypeName(_type, ref sb);
         }

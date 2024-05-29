@@ -92,9 +92,9 @@ namespace ILCompiler.ObjectWriter
             var sectionHeader = new CoffSectionHeader
             {
                 Name =
-                    section == ObjectNodeSection.TLSSection ? ".tls$" :
-                    section == ObjectNodeSection.HydrationTargetSection ? "hydrated" :
-                    (section.Name.StartsWith('.') ? section.Name : "." + section.Name),
+                    section == ObjectNodeSection.TLSSection ? new Utf8String(".tls$"u8) :
+                    section == ObjectNodeSection.HydrationTargetSection ? new Utf8String("hydrated"u8) :
+                    (section.Name.StartsWith('.') ? section.Name : new Utf8String("." + section.Name)),
                 SectionCharacteristics = section.Type switch
                 {
                     SectionType.ReadOnly =>
@@ -151,7 +151,7 @@ namespace ILCompiler.ObjectWriter
                 });
                 _symbols.Add(auxRecord);
 
-                if (symbolName != default)
+                if (symbolName != default(Utf8String))
                 {
                     _symbolNameToIndex.Add(symbolName, (uint)_symbols.Count);
                     _symbols.Add(new CoffSymbol
@@ -438,14 +438,14 @@ namespace ILCompiler.ObjectWriter
                         {
                             xdataSectionWriter.EmitSymbolReference(
                                 IMAGE_REL_BASED_ADDR32NB,
-                                GetMangledName(associatedDataNode));
+                                GetMangledExternCName(associatedDataNode));
                         }
 
                         if (ehInfo is not null)
                         {
                             xdataSectionWriter.EmitSymbolReference(
                                 IMAGE_REL_BASED_ADDR32NB,
-                                GetMangledName(ehInfo));
+                                GetMangledExternCName(ehInfo));
                         }
 
                         if (nodeWithCodeInfo.GCInfo is not null)
@@ -597,7 +597,7 @@ namespace ILCompiler.ObjectWriter
 
         private protected override void EmitDebugFunctionInfo(
             uint methodTypeIndex,
-            string methodName,
+            Utf8String methodName,
             SymbolDefinition methodSymbol,
             INodeWithDebugInfo debugNode,
             bool hasSequencePoints)
@@ -640,7 +640,7 @@ namespace ILCompiler.ObjectWriter
         }
 
         private protected override void EmitDebugThunkInfo(
-            string methodName,
+            Utf8String methodName,
             SymbolDefinition methodSymbol,
             INodeWithDebugInfo debugNode)
         {

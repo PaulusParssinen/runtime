@@ -33,7 +33,7 @@ namespace ILCompiler.ObjectWriter
         private readonly byte _insPaddingByte;
 
         // Standard sections
-        private readonly Dictionary<string, int> _sectionNameToSectionIndex = new(StringComparer.Ordinal);
+        private readonly Dictionary<Utf8String, int> _sectionNameToSectionIndex = new();
         private readonly List<SectionData> _sectionIndexToData = new();
         private readonly List<List<SymbolicRelocation>> _sectionIndexToRelocations = new();
 
@@ -72,7 +72,7 @@ namespace ILCompiler.ObjectWriter
         /// <returns>Writer for a given section.</returns>
         /// <remarks>
         /// When creating a COMDAT section both <paramref name="comdatName"/> and <paramref name="symbolName"/>
-        /// has to be specified. <paramref name="comdatName"/> specifies the group section. For the primary
+        /// have to be specified. <paramref name="comdatName"/> specifies the group section. For the primary
         /// symbol both <paramref name="comdatName"/> and <paramref name="symbolName"/> will be the same.
         /// For associated sections, such as exception or debugging information, the <paramref name="symbolName"/>
         /// will be different.
@@ -82,14 +82,14 @@ namespace ILCompiler.ObjectWriter
             int sectionIndex;
             SectionData sectionData;
 
-            if (comdatName is not null || !_sectionNameToSectionIndex.TryGetValue(section.Name, out sectionIndex))
+            if (comdatName != default(Utf8String) || !_sectionNameToSectionIndex.TryGetValue(section.Name, out sectionIndex))
             {
                 sectionData = new SectionData(section.Type == SectionType.Executable ? _insPaddingByte : (byte)0);
                 sectionIndex = _sectionIndexToData.Count;
                 CreateSection(section, comdatName, symbolName, sectionData.GetReadStream());
                 _sectionIndexToData.Add(sectionData);
                 _sectionIndexToRelocations.Add(new());
-                if (comdatName is null)
+                if (comdatName == default(Utf8String))
                 {
                     _sectionNameToSectionIndex.Add(section.Name, sectionIndex);
                 }
@@ -135,13 +135,12 @@ namespace ILCompiler.ObjectWriter
             return true;
         }
 
-        private protected static ObjectNodeSection GetSharedSection(ObjectNodeSection section, string key)
+        private protected static ObjectNodeSection GetSharedSection(ObjectNodeSection section, Utf8String key)
         {
-            string standardSectionPrefix = "";
-            if (section.IsStandardSection)
-                standardSectionPrefix = ".";
+            Utf8String sectionName = section.IsStandardSection ?
+                new Utf8String($".{section.Name}") : section.Name;
 
-            return new ObjectNodeSection(standardSectionPrefix + section.Name, section.Type, key);
+            return new ObjectNodeSection(sectionName, section.Type, key);
         }
 
         private unsafe void EmitOrResolveRelocation(
@@ -263,13 +262,13 @@ namespace ILCompiler.ObjectWriter
 
         private protected virtual Utf8String AppendExternCName(Utf8String name) => name;
 
-        private protected Utf8String GetMangledName(ISymbolNode symbolNode)
+        private protected Utf8String GetMangledExternCName(ISymbolNode symbolNode)
         {
             Utf8String symbolName;
 
             if (!_mangledNameMap.TryGetValue(symbolNode, out symbolName))
             {
-                symbolName = AppendExternCName(symbolNode.GetMangledName(_nodeFactory.NameMangler));
+                symbolName = AppendExternCName(symbolNode.GetMangledUtf8Name(_nodeFactory.NameMangler));
                 _mangledNameMap.Add(symbolNode, symbolName);
             }
 
@@ -381,8 +380,6 @@ namespace ILCompiler.ObjectWriter
                 progressReporter = new ProgressReporter(logger, count);
             }
 
-            var mangledNameBuilder = new Utf8StringBuilder(stackalloc byte[512]);
-
             List<BlockToRelocate> blocksToRelocate = new();
             foreach (DependencyNode depNode in nodes)
             {
@@ -407,7 +404,7 @@ namespace ILCompiler.ObjectWriter
                 Utf8String currentSymbolName = default;
                 if (symbolNode != null)
                 {
-                    currentSymbolName = GetMangledName(symbolNode);
+                    currentSymbolName = GetMangledExternCName(symbolNode);
                 }
 
                 ObjectNodeSection section = node.GetSection(_nodeFactory);
@@ -421,11 +418,14 @@ namespace ILCompiler.ObjectWriter
                 long thumbBit = _nodeFactory.Target.Architecture == TargetArchitecture.ARM && isMethod ? 1 : 0;
                 foreach (ISymbolDefinitionNode n in nodeContents.DefinedSymbols)
                 {
+                    Utf8String symbolName = n == node ? currentSymbolName : GetMangledExternCName(n);
+
                     sectionWriter.EmitSymbolDefinition(
-                        n == node ? currentSymbolName : GetMangledName(n),
+                        symbolName,
                         n.Offset + thumbBit,
                         n.Offset == 0 && isMethod ? nodeContents.Data.Length : 0);
-                    if (_nodeFactory.GetSymbolAlternateName(n) is string alternateName)
+
+                    if (_nodeFactory.NodeAliases.TryGetValue(n, out Utf8String alternateName))
                     {
                         sectionWriter.EmitSymbolDefinition(
                             AppendExternCName(alternateName),
@@ -506,7 +506,7 @@ namespace ILCompiler.ObjectWriter
 
                     if (node is INodeWithDebugInfo debugNode and ISymbolDefinitionNode symbolDefinitionNode)
                     {
-                        Utf8String methodName = GetMangledName(symbolDefinitionNode);
+                        Utf8String methodName = GetMangledExternCName(symbolDefinitionNode);
                         if (_definedSymbols.TryGetValue(methodName, out var methodSymbol))
                         {
                             if (node is IMethodNode methodNode)

@@ -47,11 +47,11 @@ namespace ILCompiler.DependencyAnalysis
             }
         }
 
-        public static string GetMangledName(TypeDesc type, NameMangler nameMangler)
+        public static Utf8String GetMangledName(TypeDesc type, NameMangler nameMangler)
         {
-            using var sb = new Utf8StringBuilder(stackalloc byte[256]);
+            var sb = new Utf8StringBuilder(stackalloc byte[256]);
             nameMangler.NodeMangler.AppendNonGCStatics(type, ref sb);
-            return sb.ToString();
+            return sb.ToUtf8StringAndDispose();
         }
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)

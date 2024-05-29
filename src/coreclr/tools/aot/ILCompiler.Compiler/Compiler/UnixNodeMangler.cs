@@ -15,20 +15,20 @@ namespace ILCompiler
         public sealed override void AppendMangledBoxedTypeName(TypeDesc type, ref Utf8StringBuilder sb)
         {
             Debug.Assert(type.IsValueType);
-            sb.Append("Boxed_"u8);
+            sb.AppendLiteral("Boxed_");
             NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
         public sealed override void AppendMethodTable(TypeDesc type, ref Utf8StringBuilder sb)
         {
             // Use temporary buffer to get the length prefix
-            var nameBuffer = new Utf8StringBuilder(stackalloc byte[128]);
+            var nameBuffer = new Utf8StringBuilder(stackalloc byte[256]);
             if (type.IsValueType)
                 AppendMangledBoxedTypeName(type, ref sb);
             else
                 NameMangler.AppendMangledTypeName(type, ref sb);
 
-            sb.Append("_ZTV"u8);
+            sb.AppendLiteral("_ZTV");
             sb.AppendInvariant(nameBuffer.Length);
             sb.Append(nameBuffer.AsSpan());
 
@@ -37,47 +37,47 @@ namespace ILCompiler
 
         public sealed override void AppendGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            sb.Append("__GCSTATICS"u8);
+            sb.AppendLiteral("__GCSTATICS");
             NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
         public sealed override void AppendNonGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            sb.Append("__NONGCSTATICS"u8);
+            sb.AppendLiteral("__NONGCSTATICS");
             NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
         public sealed override void AppendThreadStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
             sb.Append(NameMangler.CompilationUnitPrefix);
-            sb.Append("__THREADSTATICS"u8);
+            sb.AppendLiteral("__THREADSTATICS");
             NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
         public sealed override void AppendThreadStaticsIndex(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            sb.Append("__TypeThreadStaticIndex"u8);
+            sb.AppendLiteral("__TypeThreadStaticIndex");
             NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
         public sealed override void AppendTypeGenericDictionary(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            sb.Append(GenericDictionaryNamePrefix);
+            sb.AppendLiteral(GenericDictionaryNamePrefix);
             NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
         public sealed override void AppendMethodGenericDictionary(MethodDesc method, ref Utf8StringBuilder sb)
         {
-            sb.Append(GenericDictionaryNamePrefix);
+            sb.AppendLiteral(GenericDictionaryNamePrefix);
             NameMangler.AppendMangledMethodName(method, ref sb);
         }
 
-        public sealed override string ExternMethod(string unmangledName, MethodDesc method)
+        public sealed override Utf8String ExternMethod(string unmangledName, MethodDesc method)
         {
-            return unmangledName;
+            return new Utf8String(unmangledName);
         }
 
-        public sealed override string ExternVariable(string unmangledName)
+        public sealed override Utf8String ExternVariable(Utf8String unmangledName)
         {
             return unmangledName;
         }

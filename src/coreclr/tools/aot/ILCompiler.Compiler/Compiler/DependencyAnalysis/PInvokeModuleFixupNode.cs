@@ -26,7 +26,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__nativemodule_"u8);
+            sb.AppendLiteral("__nativemodule_");
             _pInvokeModuleData.AppendMangledName(nameMangler, ref sb);
         }
         public int Offset => 0;

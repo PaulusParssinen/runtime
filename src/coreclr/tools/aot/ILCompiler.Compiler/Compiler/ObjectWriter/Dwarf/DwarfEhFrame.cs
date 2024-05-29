@@ -57,7 +57,7 @@ namespace ILCompiler.ObjectWriter
             {
                 augmentationString.Append('z');
             }
-            if (cie.PersonalitySymbolName != null)
+            if (cie.PersonalitySymbolName != default(Utf8String))
             {
                 augmentationString.Append('P');
                 augmentationLength += 1u + AddressSize(cie.PersonalityEncoding);
@@ -101,7 +101,7 @@ namespace ILCompiler.ObjectWriter
             _sectionWriter.WriteULEB128(cie.ReturnAddressRegister);
 
             _sectionWriter.WriteULEB128(augmentationLength);
-            if (cie.PersonalitySymbolName != null)
+            if (cie.PersonalitySymbolName != default(Utf8String))
             {
                 _sectionWriter.WriteByte(cie.PersonalityEncoding);
                 WriteAddress(cie.PersonalityEncoding, cie.PersonalitySymbolName);
@@ -171,9 +171,9 @@ namespace ILCompiler.ObjectWriter
             }
         }
 
-        private void WriteAddress(byte encoding, string symbolName, long symbolOffset = 0)
+        private void WriteAddress(byte encoding, Utf8String symbolName, long symbolOffset = 0)
         {
-            if (symbolName != null)
+            if (symbolName != default(Utf8String))
             {
                 RelocType relocationType = encoding switch
                 {

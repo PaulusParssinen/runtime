@@ -39,11 +39,11 @@ namespace ILCompiler.DependencyAnalysis
         public int Offset => 0;
         public MetadataType Type => _type;
 
-        public static string GetMangledName(TypeDesc type, NameMangler nameMangler)
+        public static Utf8String GetMangledName(TypeDesc type, NameMangler nameMangler)
         {
             var sb = new Utf8StringBuilder(stackalloc byte[128]);
             nameMangler.NodeMangler.AppendGCStatics(type, ref sb);
-            return sb.ToStringAndDispose();
+            return sb.ToUtf8StringAndDispose();
         }
 
         private ISymbolNode GetGCStaticEETypeNode(NodeFactory factory)

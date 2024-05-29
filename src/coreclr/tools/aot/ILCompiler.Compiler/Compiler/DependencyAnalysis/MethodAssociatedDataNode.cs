@@ -48,7 +48,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("_associatedData_"u8);
+            sb.AppendLiteral("_associatedData_");
             nameMangler.AppendMangledMethodName(_methodNode.Method, ref sb);
         }
 

@@ -25,7 +25,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__GenericVariance"u8);
+            sb.AppendLiteral("__GenericVariance");
 
             for (int i = 0; i < _details.Variance.Length; i++)
             {

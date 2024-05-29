@@ -14,6 +14,7 @@ using Internal.ReadyToRunConstants;
 using ILCompiler;
 using ILCompiler.DependencyAnalysis;
 using Internal.TypeSystem.Ecma;
+using Internal.Text;
 
 #if SUPPORT_JIT
 using MethodCodeNode = Internal.Runtime.JitSupport.JitMethodCodeNode;
@@ -602,28 +603,28 @@ namespace Internal.JitInterface
                     id = ReadyToRunHelper.NewObject;
                     break;
                 case CorInfoHelpFunc.CORINFO_HELP_NEWSFAST:
-                    return _compilation.NodeFactory.ExternSymbol("RhpNewFast");
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFast"u8.ToArray()));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWSFAST_FINALIZE:
-                    return _compilation.NodeFactory.ExternSymbol("RhpNewFinalizable");
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFinalizable"u8.ToArray()));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWSFAST_ALIGN8:
-                    return _compilation.NodeFactory.ExternSymbol("RhpNewFastAlign8");
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFastAlign8"u8.ToArray()));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWSFAST_ALIGN8_FINALIZE:
-                    return _compilation.NodeFactory.ExternSymbol("RhpNewFinalizableAlign8");
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFinalizableAlign8"u8.ToArray()));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWSFAST_ALIGN8_VC:
-                    return _compilation.NodeFactory.ExternSymbol("RhpNewFastMisalign");
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFastMisalign"u8.ToArray()));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWARR_1_DIRECT:
                     id = ReadyToRunHelper.NewArray;
                     break;
                 case CorInfoHelpFunc.CORINFO_HELP_NEWARR_1_ALIGN8:
-                    return _compilation.NodeFactory.ExternSymbol("RhpNewArrayAlign8");
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewArrayAlign8"u8.ToArray()));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWARR_1_VC:
-                    return _compilation.NodeFactory.ExternSymbol("RhpNewArray");
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewArray"u8.ToArray()));
 
                 case CorInfoHelpFunc.CORINFO_HELP_STACK_PROBE:
-                    return _compilation.NodeFactory.ExternSymbol("RhpStackProbe");
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpStackProbe"u8.ToArray()));
 
                 case CorInfoHelpFunc.CORINFO_HELP_POLL_GC:
-                    return _compilation.NodeFactory.ExternSymbol("RhpGcPoll");
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpGcPoll"u8.ToArray()));
 
                 case CorInfoHelpFunc.CORINFO_HELP_LMUL:
                     id = ReadyToRunHelper.LMul;
@@ -805,7 +806,7 @@ namespace Internal.JitInterface
 
             ISymbolNode entryPoint;
             if (mangledName != null)
-                entryPoint = _compilation.NodeFactory.ExternSymbol(mangledName);
+                entryPoint = _compilation.NodeFactory.ExternSymbol(new Utf8String(mangledName));
             else
                 entryPoint = _compilation.NodeFactory.MethodEntrypoint(methodDesc);
 
@@ -1644,7 +1645,7 @@ namespace Internal.JitInterface
                     // If this is LDVIRTFTN of an interface method that is part of a verifiable delegate creation sequence,
                     // RyuJIT is not going to use this value.
                     pResult->exactContextNeedsRuntimeLookup = false;
-                    pResult->codePointerOrStubLookup.constLookup = CreateConstLookupToSymbol(_compilation.NodeFactory.ExternSymbol("NYI_LDVIRTFTN"));
+                    pResult->codePointerOrStubLookup.constLookup = CreateConstLookupToSymbol(_compilation.NodeFactory.ExternSymbol(new Utf8String("NYI_LDVIRTFTN")));
                 }
                 else
                 {
@@ -1914,16 +1915,16 @@ namespace Internal.JitInterface
             MethodDesc md = HandleToObject(method);
 
             string externName = _compilation.PInvokeILProvider.GetDirectCallExternName(md);
-            externName = _compilation.NodeFactory.NameMangler.NodeMangler.ExternMethod(externName, md);
+            Utf8String externMethodName = _compilation.NodeFactory.NameMangler.NodeMangler.ExternMethod(externName, md);
 
-            pLookup = CreateConstLookupToSymbol(_compilation.NodeFactory.ExternSymbol(externName));
+            pLookup = CreateConstLookupToSymbol(_compilation.NodeFactory.ExternSymbol(externMethodName));
         }
 
         private void getGSCookie(IntPtr* pCookieVal, IntPtr** ppCookieVal)
         {
             if (ppCookieVal != null)
             {
-                *ppCookieVal = (IntPtr*)ObjectToHandle(_compilation.NodeFactory.ExternVariable("__security_cookie"));
+                *ppCookieVal = (IntPtr*)ObjectToHandle(_compilation.NodeFactory.ExternVariable(new Utf8String("__security_cookie")));
                 *pCookieVal = IntPtr.Zero;
             }
             else
@@ -2062,7 +2063,7 @@ namespace Internal.JitInterface
         private int* getAddrOfCaptureThreadGlobal(ref void* ppIndirection)
         {
             ppIndirection = null;
-            return (int*)ObjectToHandle(_compilation.NodeFactory.ExternVariable("RhpTrapThreads"));
+            return (int*)ObjectToHandle(_compilation.NodeFactory.ExternVariable(new Utf8String("RhpTrapThreads")));
         }
 
         private void getFieldInfo(ref CORINFO_RESOLVED_TOKEN pResolvedToken, CORINFO_METHOD_STRUCT_* callerHandle, CORINFO_ACCESS_FLAGS flags, CORINFO_FIELD_INFO* pResult)
@@ -2471,10 +2472,10 @@ namespace Internal.JitInterface
         private void getThreadLocalStaticInfo_NativeAOT(CORINFO_THREAD_STATIC_INFO_NATIVEAOT* pInfo)
         {
             pInfo->offsetOfThreadLocalStoragePointer = (uint)(11 * PointerSize); // Offset of ThreadLocalStoragePointer in the TEB
-            pInfo->tlsIndexObject = CreateConstLookupToSymbol(_compilation.NodeFactory.ExternSymbol("_tls_index"));
+            pInfo->tlsIndexObject = CreateConstLookupToSymbol(_compilation.NodeFactory.ExternSymbol(new Utf8String("_tls_index")));
             pInfo->tlsRootObject = CreateConstLookupToSymbol(_compilation.NodeFactory.TlsRoot);
             pInfo->threadStaticBaseSlow = CreateConstLookupToSymbol(_compilation.NodeFactory.HelperEntrypoint(HelperEntrypoint.GetInlinedThreadStaticBaseSlow));
-            pInfo->tlsGetAddrFtnPtr = CreateConstLookupToSymbol(_compilation.NodeFactory.ExternSymbol("__tls_get_addr"));
+            pInfo->tlsGetAddrFtnPtr = CreateConstLookupToSymbol(_compilation.NodeFactory.ExternSymbol(new Utf8String("__tls_get_addr")));
         }
 
 #pragma warning disable CA1822 // Mark members as static

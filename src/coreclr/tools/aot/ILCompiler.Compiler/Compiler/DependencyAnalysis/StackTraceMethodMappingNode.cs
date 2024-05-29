@@ -35,7 +35,7 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("_stacktrace_methodRVA_to_token_mapping"u8);
+            sb.AppendLiteral("_stacktrace_methodRVA_to_token_mapping");
         }
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

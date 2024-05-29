@@ -6,8 +6,9 @@ using System.Text;
 using System.Diagnostics;
 using System.Buffers;
 using System.Runtime.CompilerServices;
-using System.Text.Unicode;
 using System.Globalization;
+using System.Text.Unicode;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Internal.Text
 {
@@ -25,18 +26,10 @@ namespace Internal.Text
             _pos = 0;
         }
 
-        public Utf8StringBuilder(int initialCapacity)
-        {
-            _arrayToReturnToPool = ArrayPool<byte>.Shared.Rent(initialCapacity);
-            _bytes = _arrayToReturnToPool;
-            _pos = 0;
-        }
-
         public readonly int Length => _pos;
 
         public readonly ReadOnlySpan<byte> AsSpan() => _bytes.Slice(0, _pos);
         public readonly ReadOnlySpan<byte> AsSpan(int start) => _bytes.Slice(start, _pos - start);
-        public readonly ReadOnlySpan<byte> AsSpan(int start, int length) => _bytes.Slice(start, length);
 
         public void Clear()
         {
@@ -56,10 +49,16 @@ namespace Internal.Text
 
         public void Append(scoped ReadOnlySpan<byte> value)
         {
-            EnsureCapacity(value.Length);
+            while (true)
+            {
+                if (value.TryCopyTo(_bytes.Slice(_pos)))
+                {
+                    _pos += value.Length;
+                    return;
+                }
 
-            value.CopyTo(_bytes.Slice(_pos));
-            _pos += value.Length;
+                Grow(value.Length);
+            }
         }
 
         public void Append(char value)
@@ -72,24 +71,55 @@ namespace Internal.Text
 
         public void Append(scoped ReadOnlySpan<char> value)
         {
-            int length = Encoding.UTF8.GetByteCount(value);
-            EnsureCapacity(length);
+            while (true)
+            {
+                if (Encoding.UTF8.TryGetBytes(value, _bytes.Slice(_pos), out int bytesWritten))
+                {
+                    _pos += bytesWritten;
+                    return;
+                }
 
-            Encoding.UTF8.GetBytes(value, _bytes.Slice(_pos));
-            _pos += length;
+                Grow(value.Length);
+            }
         }
 
-        public void AppendInvariant<T>(T value, string format = null)
-            where T : IUtf8SpanFormattable, IFormattable
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] // we want 'value' exposed to the JIT as a constant
+        public void AppendLiteral([ConstantExpected] string value)
         {
-            var invariantCulture = CultureInfo.InvariantCulture;
-            if (value.TryFormat(_bytes.Slice(_pos), out int bytesWritten, format, invariantCulture))
+            // We only allow ASCII because this method should only receive constant string literals as inputs.
+            Debug.Assert(Ascii.IsValid(value));
+            Debug.Assert(value is not null);
+
+            while (true)
             {
-                _pos += bytesWritten;
+                Span<byte> buffer = _bytes.Slice(_pos);
+
+                // Use TryGetBytes once it gains UTF8EncodingSealed.ReadUtf8 call
+                // which JIT/AOT can optimize away for string literals, eliding the transcoding.
+                // Reference: https://github.com/dotnet/runtime/issues/93501
+                var inner = new Utf8.TryWriteInterpolatedStringHandler(value.Length, 0, buffer, out _);
+                if (inner.AppendLiteral(value))
+                {
+                    _pos += value.Length;
+                    return;
+                }
+
+                Grow();
             }
-            else
+        }
+
+        public void AppendInvariant<T>(T value, ReadOnlySpan<char> format = default)
+            where T : IUtf8SpanFormattable
+        {
+            while (true)
             {
-                Append(value.ToString(format, invariantCulture));
+                if (value.TryFormat(_bytes.Slice(_pos), out int bytesWritten, format, CultureInfo.InvariantCulture))
+                {
+                    _pos += bytesWritten;
+                    return;
+                }
+
+                Grow();
             }
         }
 
@@ -101,7 +131,6 @@ namespace Internal.Text
         {
             string value = ToString();
             Dispose();
-
             return value;
         }
 
@@ -113,61 +142,81 @@ namespace Internal.Text
         {
             Utf8String value = ToUtf8String();
             Dispose();
-
             return value;
         }
 
-        private void EnsureCapacity(int extraSpace)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void EnsureCapacity(int additionalBytes)
         {
-            if ((uint)(_pos + extraSpace) > (uint)_bytes.Length)
-                Grow(extraSpace);
+            if ((uint)(_pos + additionalBytes) > (uint)_bytes.Length)
+                Grow(additionalBytes);
         }
 
-        /// <summary>
-        /// Resize the internal buffer either by doubling current buffer size or
-        /// by adding <paramref name="additionalCapacityBeyondPos"/> to
-        /// <see cref="_pos"/> whichever is greater.
-        /// </summary>
-        /// <param name="additionalCapacityBeyondPos">
-        /// Number of bytes requested beyond current position.
-        /// </param>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void Grow(int additionalCapacityBeyondPos)
+        [MethodImpl(MethodImplOptions.NoInlining)] // keep consumers as streamlined as possible
+        private void Grow(int additionalBytes)
         {
-            Debug.Assert(additionalCapacityBeyondPos > 0);
-            Debug.Assert(_pos > _bytes.Length - additionalCapacityBeyondPos, "Grow called incorrectly, no resize is needed.");
+            // This method is called when the remaining space (_bytes.Length - _pos) is
+            // insufficient to store a specific number of additional bytes.  Thus, we
+            // need to grow to at least that new total. GrowCore will handle growing by more
+            // than that if possible.
+            Debug.Assert(additionalBytes > _bytes.Length - _pos);
+            GrowCore((uint)_pos + (uint)additionalBytes);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)] // keep consumers as streamlined as possible
+        private void Grow()
+        {
+            // This method is called when the remaining space in _bytes isn't sufficient to continue
+            // the operation.  Thus, we need at least one byte beyond _bytes.Length.  GrowCore
+            // will handle growing by more than that if possible.
+            GrowCore(1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] // but reuse this grow logic directly in both of the above grow routines
+        private void GrowCore(uint requiredMinCapacity)
+        {
+            Debug.Assert(requiredMinCapacity > 0);
 
             const uint ArrayMaxLength = 0x7FFFFFC7; // same as Array.MaxLength
 
             // Increase to at least the required size (_pos + additionalCapacityBeyondPos), but try
             // to double the size if possible, bounding the doubling to not go beyond the max array length.
-            int newCapacity = (int)Math.Max(
-                (uint)(_pos + additionalCapacityBeyondPos),
-                Math.Min((uint)_bytes.Length * 2, ArrayMaxLength));
+            int newCapacity = (int)Math.Max(requiredMinCapacity, Math.Min((uint)_bytes.Length * 2, ArrayMaxLength));
 
             // Make sure to let Rent throw an exception if the caller has a bug and the desired capacity is negative.
             // This could also go negative if the actual required length wraps around.
             byte[] poolArray = ArrayPool<byte>.Shared.Rent(newCapacity);
-
             _bytes.Slice(0, _pos).CopyTo(poolArray);
 
             byte[] toReturn = _arrayToReturnToPool;
             _bytes = _arrayToReturnToPool = poolArray;
-            if (toReturn != null)
+            if (toReturn is not null)
             {
                 ArrayPool<byte>.Shared.Return(toReturn);
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] // used only on a few hot paths
         public void Dispose()
         {
             byte[] toReturn = _arrayToReturnToPool;
             this = default; // for safety, to avoid using pooled array if this instance is erroneously appended to again
-            if (toReturn != null)
+            if (toReturn is not null)
             {
                 ArrayPool<byte>.Shared.Return(toReturn);
             }
+        }
+    }
+
+    public static class Utf8Extensions
+    {
+        public static void AppendInterpolated(
+            this ref Utf8StringBuilder builder,
+            [InterpolatedStringHandlerArgument(nameof(builder))]
+            ref Utf8String.InterpolatedStringHandler handler)
+        {
+            // TODO: Comment about what Roslyn did when we get here
+            builder = handler._builder;
         }
     }
 }

@@ -49,12 +49,12 @@ namespace ILCompiler.ObjectWriter
             MultiKeySort(reservedStrings, 0);
 
             // Add the strings to string table
-            Utf8String lastText = default;
+            Utf8String lastText = default(Utf8String);
             for (int i = 0; i < reservedStrings.Length; i++)
             {
                 Utf8String text = reservedStrings[i];
                 uint index;
-                if (lastText != default && lastText.AsSpan().EndsWith(text.AsSpan()))
+                if (lastText != default(Utf8String) && lastText.AsSpan().EndsWith(text.AsSpan()))
                 {
                     // Suffix matches the last symbol
                     index = (uint)(_stream.Length - text.Length - 1);

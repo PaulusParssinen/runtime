@@ -38,13 +38,17 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("unbox_"u8);
+            sb.AppendLiteral("unbox_");
             nameMangler.AppendMangledMethodName(Method, ref sb);
         }
 
-        public static string GetMangledName(NameMangler nameMangler, MethodDesc method)
+        public static Utf8String GetMangledName(NameMangler nameMangler, MethodDesc method)
         {
-            return "unbox_" + nameMangler.GetMangledMethodName(method);
+            // TODO: Choose deduping pattern when there's static calls to get mangled name without materializing a tmp node.
+            var sb = new Utf8StringBuilder(stackalloc byte[256]);
+            sb.AppendLiteral("unbox_");
+            nameMangler.AppendMangledMethodName(method, ref sb);
+            return sb.ToUtf8StringAndDispose();
         }
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

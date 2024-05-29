@@ -1505,7 +1505,7 @@ namespace ILCompiler.DependencyAnalysis
 
             public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
             {
-                sb.Append("__writableData"u8);
+                sb.AppendLiteral("__writableData");
                 nameMangler.AppendMangledTypeName(_type.Type, ref sb);
             }
 

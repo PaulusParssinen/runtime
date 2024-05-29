@@ -187,7 +187,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("TypeHandle_"u8);
+            sb.AppendLiteral("TypeHandle_");
             nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
@@ -245,7 +245,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("UnwrapNullable_"u8);
+            sb.AppendLiteral("UnwrapNullable_");
             nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
@@ -296,7 +296,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("MethodHandle_"u8);
+            sb.AppendLiteral("MethodHandle_");
             nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 
@@ -346,7 +346,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("FieldHandle_"u8);
+            sb.AppendLiteral("FieldHandle_");
             nameMangler.AppendMangledFieldName(_field, ref sb);
         }
 
@@ -399,7 +399,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("MethodDictionary_"u8);
+            sb.AppendLiteral("MethodDictionary_");
             nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 
@@ -454,9 +454,9 @@ namespace ILCompiler.DependencyAnalysis
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             if (!_isUnboxingThunk)
-                sb.Append("MethodEntry_"u8);
+                sb.AppendLiteral("MethodEntry_");
             else
-                sb.Append("UnboxMethodEntry_"u8);
+                sb.AppendLiteral("UnboxMethodEntry_");
 
             nameMangler.AppendMangledMethodName(_method, ref sb);
         }
@@ -536,7 +536,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("DispatchCell_"u8);
+            sb.AppendLiteral("DispatchCell_");
             nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 
@@ -587,7 +587,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("NonGCStaticBase_"u8);
+            sb.AppendLiteral("NonGCStaticBase_");
             nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
@@ -638,7 +638,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("ThreadStaticBase_"u8);
+            sb.AppendLiteral("ThreadStaticBase_");
             nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
@@ -689,7 +689,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("GCStaticBase_"u8);
+            sb.AppendLiteral("GCStaticBase_");
             nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
@@ -735,12 +735,12 @@ namespace ILCompiler.DependencyAnalysis
         public override ISymbolNode GetTarget(NodeFactory factory, GenericLookupResultContext dictionary)
         {
             TypeDesc instantiatedType = _type.GetNonRuntimeDeterminedTypeFromRuntimeDeterminedSubtypeViaSubstitution(dictionary.TypeInstantiation, dictionary.MethodInstantiation);
-            return factory.ExternSymbol(JitHelper.GetNewObjectHelperForType(instantiatedType));
+            return factory.ExternSymbol(new Utf8String(JitHelper.GetNewObjectHelperForType(instantiatedType)));
         }
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("AllocObject_"u8);
+            sb.AppendLiteral("AllocObject_");
             nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
@@ -788,7 +788,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("DefaultCtor_"u8);
+            sb.AppendLiteral("DefaultCtor_");
             nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
@@ -906,11 +906,11 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("ConstrainedMethodUseLookupResult_"u8);
+            sb.AppendLiteral("ConstrainedMethodUseLookupResult_");
             nameMangler.AppendMangledTypeName(_constraintType, ref sb);
             nameMangler.AppendMangledMethodName(_constrainedMethod, ref sb);
             if (_directCall)
-                sb.Append("Direct"u8);
+                sb.AppendLiteral("Direct");
         }
 
         public override string ToString() => $"ConstrainedMethodUseLookupResult: {_constraintType} {_constrainedMethod} {_directCall}";

@@ -10,7 +10,7 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__typemanager_indirection"u8);
+            sb.AppendLiteral("__typemanager_indirection");
         }
         public int Offset => 0;
         public override bool IsShareable => false;
