@@ -33,7 +33,10 @@ namespace ILCompiler.DependencyAnalysis
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.AppendLiteral("__InterfaceDispatchMap_");
-            // TODO: There was nameMangler.AppendSanitizedName here for the type.. The mangled type name should already be sanitized.. right? Otherwise we have problems
+            // TODO: There was nameMangler.AppendSanitizedName here for the type.. The mangled type name should already be sanitized, right? Otherwise we have inconsistencies.
+            //
+            // UPDATE: Yup.. It is inconsistent.
+            // There's atleast 1100~ unsanitized mangled typenames in the map.xml for repro.csproj
             nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
