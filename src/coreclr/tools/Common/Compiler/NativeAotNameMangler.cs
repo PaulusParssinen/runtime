@@ -7,8 +7,9 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
-
+using ILCompiler.DependencyAnalysis;
 using Internal.Text;
 using Internal.TypeSystem;
 using Internal.TypeSystem.Ecma;
@@ -417,7 +418,7 @@ namespace ILCompiler
             AppendNestedMangledName(prefixMangledSignature.Prefix, ref sb);
 
             MethodSignature signature = prefixMangledSignature.BaseSignature;
-            sb.AppendInvariant((int)signature.Flags);
+            sb.Append(signature.Flags.ToStringInvariant());
 
             sb.Append(EnterNameScopeSequence);
 
@@ -550,12 +551,12 @@ namespace ILCompiler
                 // Create temporary builder for the owning type's field name mangling
                 var fieldNameBuilder = new Utf8StringBuilder(stackalloc byte[256]);
 
-                AppendMangledTypeName(field.OwningType, ref fieldNameBuilder); // TODO: Was prependTypeName. This could be null? I don't think so..
-                sb.AppendLiteral("__");
+                AppendMangledTypeName(field.OwningType, ref fieldNameBuilder);
+                fieldNameBuilder.AppendLiteral("__");
 
                 var nameCounts = new Dictionary<int, int>();
 
-                int prependedTypeNameEnd = sb.Length;
+                int prependedTypeNameEnd = fieldNameBuilder.Length;
 
                 // Add consistent names for all fields of the type, independent on the order in which
                 // they are compiled
@@ -581,17 +582,15 @@ namespace ILCompiler
                 }
             }
 
-            AppendMangledTypeName(field.OwningType, ref sb); // prependTypeName TODO: This could previously be null?
+            int fieldNameStart = sb.Length;
 
-            // TODO: if (prependTypeName != null)
-            {
-                sb.AppendLiteral("__");
-                AppendSanitizedName(field.Name, ref sb);
-            }
+            AppendMangledTypeName(field.OwningType, ref sb);
+            sb.AppendLiteral("__");
+            AppendSanitizedName(field.Name, ref sb);
 
             lock (this)
             {
-                _mangledFieldNames.TryAdd(field, sb.ToUtf8String());
+                _mangledFieldNames.TryAdd(field, new Utf8String(sb.AsSpan(fieldNameStart)));
             }
         }
 

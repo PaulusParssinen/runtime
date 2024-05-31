@@ -128,7 +128,6 @@ namespace Internal.Text
             {
                 if (typeof(T) == typeof(char))
                 {
-                    Debug.Assert(Ascii.IsValid((char)(object)value));
                     _builder.Append((char)(object)value);
                 }
                 else if (typeof(T) == typeof(Utf8String))
@@ -143,9 +142,13 @@ namespace Internal.Text
                 {
                     _builder.Append((string)(object)value);
                 }
+                else if (value is IFormattable)
+                {
+                    _builder.Append(((IFormattable)(object)value).ToString(null, CultureInfo.InvariantCulture));
+                }
                 else
                 {
-                    // Fall back to a normal ToString and append that.
+                    // Fall back to object?.ToString
                     _builder.Append(value?.ToString());
                 }
             }

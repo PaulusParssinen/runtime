@@ -71,6 +71,8 @@ namespace Internal.Text
 
         public void Append(scoped ReadOnlySpan<char> value)
         {
+            if (value.Length == 0) return;
+
             while (true)
             {
                 if (Encoding.UTF8.TryGetBytes(value, _bytes.Slice(_pos), out int bytesWritten))
@@ -215,7 +217,6 @@ namespace Internal.Text
             [InterpolatedStringHandlerArgument(nameof(builder))]
             ref Utf8String.InterpolatedStringHandler handler)
         {
-            // TODO: Comment about what Roslyn did when we get here
             builder = handler._builder;
         }
     }
