@@ -25,8 +25,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__GenericMethodsTemplateMap");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__GenericMethodsTemplateMap");
         }
 
         int INodeWithSize.Size => _size.Value;

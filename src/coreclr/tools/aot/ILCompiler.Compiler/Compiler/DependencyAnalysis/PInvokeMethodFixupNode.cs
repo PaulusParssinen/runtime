@@ -230,17 +230,14 @@ namespace ILCompiler.DependencyAnalysis
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             ModuleData.AppendMangledName(nameMangler, ref sb);
-            sb.AppendLiteral("__");
-            sb.Append(EntryPointName);
+            sb.AppendInterpolated($"__{EntryPointName}");
             if (CharSetMangling != default)
             {
-                sb.AppendLiteral("__");
-                sb.Append(CharSetMangling.ToString());
+                sb.AppendInterpolated($"__{CharSetMangling}");
             }
             if (SignatureBytes >= 0)
             {
-                sb.Append('@');
-                sb.AppendInvariant(SignatureBytes);
+                sb.AppendInterpolated($"@{SignatureBytes}");
             }
         }
     }

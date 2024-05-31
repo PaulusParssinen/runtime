@@ -41,8 +41,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.AppendLiteral("__GCStaticEEType_");
-            sb.Append(_gcMap.ToString());
+            sb.AppendInterpolated($"__GCStaticEEType_{_gcMap.ToString()}");
         }
 
         int ISymbolDefinitionNode.Offset

@@ -21,18 +21,16 @@ namespace ILCompiler
 
         public sealed override void AppendMethodTable(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            // Use temporary buffer to get the length prefix
-            var nameBuffer = new Utf8StringBuilder(stackalloc byte[256]);
+            // Use temporary builder to get the length prefix
+            var nameBuilder = new Utf8StringBuilder(stackalloc byte[256]);
             if (type.IsValueType)
                 AppendMangledBoxedTypeName(type, ref sb);
             else
                 NameMangler.AppendMangledTypeName(type, ref sb);
 
-            sb.AppendLiteral("_ZTV");
-            sb.AppendInvariant(nameBuffer.Length);
-            sb.Append(nameBuffer.AsSpan());
+            sb.AppendInterpolated($"_ZTV{nameBuilder.Length}{nameBuilder.AsSpan()}");
 
-            nameBuffer.Dispose();
+            nameBuilder.Dispose();
         }
 
         public sealed override void AppendGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
@@ -49,8 +47,7 @@ namespace ILCompiler
 
         public sealed override void AppendThreadStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            sb.Append(NameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__THREADSTATICS");
+            sb.AppendInterpolated($"{NameMangler.CompilationUnitPrefix}__THREADSTATICS");
             NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
@@ -72,14 +69,8 @@ namespace ILCompiler
             NameMangler.AppendMangledMethodName(method, ref sb);
         }
 
-        public sealed override Utf8String ExternMethod(string unmangledName, MethodDesc method)
-        {
-            return new Utf8String(unmangledName);
-        }
+        public sealed override Utf8String ExternMethod(string unmangledName, MethodDesc method) => new Utf8String(unmangledName);
 
-        public sealed override Utf8String ExternVariable(Utf8String unmangledName)
-        {
-            return unmangledName;
-        }
+        public sealed override Utf8String ExternVariable(Utf8String unmangledName) => unmangledName;
     }
 }

@@ -24,8 +24,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__generic_types_hashtable");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__generic_types_hashtable");
         }
 
         int INodeWithSize.Size => _size.Value;

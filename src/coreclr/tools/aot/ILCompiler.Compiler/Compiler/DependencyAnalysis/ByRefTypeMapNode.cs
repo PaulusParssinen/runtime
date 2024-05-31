@@ -25,8 +25,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__byref_type_map");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__byref_type_map");
         }
         public int Offset => 0;
         public override bool IsShareable => false;
