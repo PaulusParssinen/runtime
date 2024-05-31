@@ -27,8 +27,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__RuntimeMethodHandle_");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__RuntimeMethodHandle_");
             nameMangler.AppendMangledMethodName(_targetMethod, ref sb);
         }
         public int Offset => 0;

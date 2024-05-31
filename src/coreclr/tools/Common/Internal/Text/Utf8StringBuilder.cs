@@ -42,10 +42,7 @@ namespace Internal.Text
             _pos = newLength;
         }
 
-        public void Append(Utf8String value)
-        {
-            Append(value.AsSpan());
-        }
+        public void Append(Utf8String value) => Append(value.AsSpan());
 
         public void Append(scoped ReadOnlySpan<byte> value)
         {

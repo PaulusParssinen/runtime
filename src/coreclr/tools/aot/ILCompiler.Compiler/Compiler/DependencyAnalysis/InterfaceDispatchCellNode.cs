@@ -29,8 +29,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__InterfaceDispatchCell_");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__InterfaceDispatchCell_");
             nameMangler.AppendMangledMethodName(_targetMethod, ref sb);
 
             if (_callSiteIdentifier != null)

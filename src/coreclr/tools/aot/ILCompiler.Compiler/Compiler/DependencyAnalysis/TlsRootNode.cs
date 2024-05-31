@@ -9,8 +9,7 @@ namespace ILCompiler.DependencyAnalysis
     {
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("tls_InlinedThreadStatics");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}tls_InlinedThreadStatics");
         }
         public int Offset => 0;
         public override bool IsShareable => false;

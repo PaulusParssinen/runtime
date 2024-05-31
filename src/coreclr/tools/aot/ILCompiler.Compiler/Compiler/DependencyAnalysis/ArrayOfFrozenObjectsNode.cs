@@ -16,8 +16,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__FrozenSegmentStart");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__FrozenSegmentStart");
         }
 
         public int Offset => 0;

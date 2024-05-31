@@ -21,8 +21,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__RuntimeFieldHandle_");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__RuntimeFieldHandle_");
             nameMangler.AppendMangledFieldName(_targetField, ref sb);
         }
         public int Offset => 0;

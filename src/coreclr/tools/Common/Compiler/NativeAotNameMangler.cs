@@ -292,7 +292,6 @@ namespace ILCompiler
             {
                 case ArrayType arrayType when type.Category is TypeFlags.Array:
                     sb.AppendLiteral("__MDArray");
-
                     sb.Append(EnterNameScopeSequence);
                     AppendMangledTypeName(arrayType.ElementType, ref sb);
                     sb.Append(DelimitNameScopeSequence);

@@ -24,8 +24,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append(_mangledName);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}{_mangledName}");
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

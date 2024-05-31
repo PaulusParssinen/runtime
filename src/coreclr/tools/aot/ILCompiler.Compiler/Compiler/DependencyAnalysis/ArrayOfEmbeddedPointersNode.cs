@@ -114,10 +114,7 @@ namespace ILCompiler.DependencyAnalysis
 
             public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
             {
-                sb.Append(nameMangler.CompilationUnitPrefix);
-                sb.Append(_parentNode._startSymbolMangledName);
-                sb.Append('_');
-                sb.AppendInvariant(_id);
+                sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}{_parentNode._startSymbolMangledName}_{_id}");
             }
         }
     }

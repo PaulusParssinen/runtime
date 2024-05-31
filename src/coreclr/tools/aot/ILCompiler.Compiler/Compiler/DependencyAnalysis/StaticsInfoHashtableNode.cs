@@ -29,8 +29,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("_StaticsInfoHashtableNode");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}_StaticsInfoHashtableNode");
         }
 
         public int Offset => 0;

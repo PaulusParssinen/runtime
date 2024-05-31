@@ -29,8 +29,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__method_to_entrypoint_map");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__method_to_entrypoint_map");
         }
         public int Offset => 0;
         public override bool IsShareable => false;

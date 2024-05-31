@@ -25,8 +25,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__type_to_cctorContext_map");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__type_to_cctorContext_map");
         }
         public int Offset => 0;
 

@@ -32,10 +32,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__external_");
-            sb.Append(_blobName);
-            sb.AppendLiteral("_references");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__external_{_blobName}_references");
         }
         public int Offset => 0;
         public override bool IsShareable => false;

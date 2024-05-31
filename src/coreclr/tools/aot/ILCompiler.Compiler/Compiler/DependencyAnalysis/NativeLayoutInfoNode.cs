@@ -42,8 +42,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.AppendLiteral("__nativelayoutinfo");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__nativelayoutinfo");
         }
         int INodeWithSize.Size => _size.Value;
         public int Offset => 0;
