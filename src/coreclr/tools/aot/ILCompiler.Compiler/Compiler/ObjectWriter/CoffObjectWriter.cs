@@ -265,7 +265,7 @@ namespace ILCompiler.ObjectWriter
                 // Emit the feat.00 symbol that controls various linker behaviors
                 _symbols.Add(new CoffSymbol
                 {
-                    Name = new Utf8String("@feat.00"u8.ToArray()),
+                    Name = new Utf8String("@feat.00"u8),
                     StorageClass = CoffSymbolClass.IMAGE_SYM_CLASS_STATIC,
                     SectionIndex = uint.MaxValue, // IMAGE_SYM_ABSOLUTE
                     Value = (uint)feat00Flags,

@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -12,18 +13,15 @@ using System.Text;
 
 namespace Internal.Text
 {
-    // TODO: Given this string is viral in the ILC, should empty (i.e. _value.Length == 0) be considered equal to _value == null aka default(Utf8String)
-    // and then provide Utf8String.IsNullOrEmpty() helper?
     public readonly struct Utf8String : IEquatable<Utf8String>, IComparable<Utf8String>
     {
-        // A lot of thing are now initializing this struct using default(Utf8String), so this is nullable
         private readonly byte[] _value;
 
         public Utf8String(byte[] underlyingArray)
         {
             _value = underlyingArray;
         }
-        public Utf8String(ReadOnlySpan<byte> span) // TODO: Remove? Hidden .ToArray = bad
+        public Utf8String(ReadOnlySpan<byte> span)
         {
             _value = span.ToArray();
         }
@@ -50,11 +48,10 @@ namespace Internal.Text
 
         public override unsafe int GetHashCode() => GetHashCode(_value);
 
-        // TODO: Do we need fast-path for default(Utf8String)
         public bool Equals(Utf8String other) => Equals(other.AsSpan());
         public bool Equals(ReadOnlySpan<byte> other) => AsSpan().SequenceEqual(other);
 
-        public int CompareTo(Utf8String other) => Compare(this, other);
+        public int CompareTo(Utf8String other) => AsSpan().SequenceCompareTo(other.AsSpan());
 
         public static bool operator ==(Utf8String left, Utf8String right) => left.Equals(right);
         public static bool operator !=(Utf8String left, Utf8String right) => !(left == right);
@@ -85,11 +82,6 @@ namespace Internal.Text
                 hash += BitOperations.RotateLeft(hash, 15);
                 return (int)hash;
             }
-        }
-
-        private static int Compare(Utf8String strA, Utf8String strB)
-        {
-            return strA.AsSpan().SequenceCompareTo(strB.AsSpan());
         }
 
         public static Utf8String Create(scoped Span<byte> initialBuffer,
@@ -159,6 +151,19 @@ namespace Internal.Text
             public void AppendFormatted(scoped ReadOnlySpan<byte> value) => _builder.Append(value);
 
             public void AppendFormatted(string value) => AppendFormatted(value.AsSpan());
+        }
+
+        // TODO: Where to put this..?
+        public sealed class Comparer : IEqualityComparer<Utf8String>//, IAlternateEqualityComparer<ReadOnlySpan<byte>, Utf8String>
+        {
+            public static readonly Comparer Instance = new();
+
+            bool IEqualityComparer<Utf8String>.Equals(Utf8String x, Utf8String y) => x.Equals(y);
+            int IEqualityComparer<Utf8String>.GetHashCode(Utf8String obj) => obj.GetHashCode();
+
+            //bool IAlternateEqualityComparer<ReadOnlySpan<byte>, Utf8String>.Equals(ReadOnlySpan<byte> span, Utf8String target) => span.SequenceEqual(target.AsSpan());
+            //int IAlternateEqualityComparer<ReadOnlySpan<byte>, Utf8String>.GetHashCode(ReadOnlySpan<byte> span) => Utf8String.GetHashCode(span);
+            //Utf8String IAlternateEqualityComparer<ReadOnlySpan<byte>, Utf8String>.Create(ReadOnlySpan<byte> span) => new Utf8String(span.ToArray());
         }
     }
 }

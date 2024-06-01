@@ -799,7 +799,7 @@ namespace ILCompiler.ObjectWriter
 
         private protected override bool UseFrameNames => true;
 
-        private static bool IsSectionSymbolName(Utf8String symbolName) => symbolName.Length > 0 && symbolName[0] == (byte)'l';
+        private static bool IsSectionSymbolName(Utf8String symbolName) => symbolName.StartsWith('l');
 
         private struct MachHeader64
         {
