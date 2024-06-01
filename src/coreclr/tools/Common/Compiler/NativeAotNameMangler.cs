@@ -258,7 +258,7 @@ namespace ILCompiler
                             {
                                 // We know this won't conflict because all the other types are
                                 // prefixed by the assembly name.
-                                _mangledTypeNames.Add(moduleType, new Utf8String(wellKnownName.ToArray()));
+                                _mangledTypeNames.Add(moduleType, new Utf8String(wellKnownName));
                                 continue;
                             }
                         }
@@ -612,7 +612,7 @@ namespace ILCompiler
 
             lock (this)
             {
-                _mangledStringLiterals.TryAdd(literal, new Utf8String(sb.AsSpan(literalStart).ToArray()));
+                _mangledStringLiterals.TryAdd(literal, new Utf8String(sb.AsSpan(literalStart)));
             }
         }
     }

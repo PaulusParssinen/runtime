@@ -73,7 +73,7 @@ namespace ILCompiler.ObjectWriter
         private protected override void CreateSection(ObjectNodeSection section, Utf8String comdatName, Utf8String symbolName, Stream sectionStream)
         {
             Utf8String sectionName = section.Name.Equals("rdata"u8) ? new Utf8String(".rodata"u8) :
-                (section.Name.StartsWith('_') || section.Name.StartsWith('.') ? section.Name : new Utf8String("." + section.Name));
+                (section.Name.StartsWith('_') || section.Name.StartsWith('.') ? section.Name : new Utf8String($".{section.Name}"));
             int sectionIndex = _sections.Count;
             uint type = 0;
             uint flags = 0;

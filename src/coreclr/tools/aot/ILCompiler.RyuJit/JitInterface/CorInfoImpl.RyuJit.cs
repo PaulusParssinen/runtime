@@ -603,28 +603,28 @@ namespace Internal.JitInterface
                     id = ReadyToRunHelper.NewObject;
                     break;
                 case CorInfoHelpFunc.CORINFO_HELP_NEWSFAST:
-                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFast"u8.ToArray()));
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFast"u8));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWSFAST_FINALIZE:
-                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFinalizable"u8.ToArray()));
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFinalizable"u8));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWSFAST_ALIGN8:
-                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFastAlign8"u8.ToArray()));
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFastAlign8"u8));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWSFAST_ALIGN8_FINALIZE:
-                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFinalizableAlign8"u8.ToArray()));
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFinalizableAlign8"u8));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWSFAST_ALIGN8_VC:
-                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFastMisalign"u8.ToArray()));
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewFastMisalign"u8));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWARR_1_DIRECT:
                     id = ReadyToRunHelper.NewArray;
                     break;
                 case CorInfoHelpFunc.CORINFO_HELP_NEWARR_1_ALIGN8:
-                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewArrayAlign8"u8.ToArray()));
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewArrayAlign8"u8));
                 case CorInfoHelpFunc.CORINFO_HELP_NEWARR_1_VC:
-                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewArray"u8.ToArray()));
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpNewArray"u8));
 
                 case CorInfoHelpFunc.CORINFO_HELP_STACK_PROBE:
-                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpStackProbe"u8.ToArray()));
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpStackProbe"u8));
 
                 case CorInfoHelpFunc.CORINFO_HELP_POLL_GC:
-                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpGcPoll"u8.ToArray()));
+                    return _compilation.NodeFactory.ExternSymbol(new Utf8String("RhpGcPoll"u8));
 
                 case CorInfoHelpFunc.CORINFO_HELP_LMUL:
                     id = ReadyToRunHelper.LMul;
