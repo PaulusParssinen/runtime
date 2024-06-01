@@ -94,7 +94,7 @@ namespace ILCompiler.ObjectWriter
                 Name =
                     section == ObjectNodeSection.TLSSection ? new Utf8String(".tls$"u8) :
                     section == ObjectNodeSection.HydrationTargetSection ? new Utf8String("hydrated"u8) :
-                    (section.Name.StartsWith('.') ? section.Name : new Utf8String("." + section.Name)),
+                    (section.Name.StartsWith('.') ? section.Name : Utf8String.Create(stackalloc byte[32], $".{section.Name}")),
                 SectionCharacteristics = section.Type switch
                 {
                     SectionType.ReadOnly =>
@@ -384,6 +384,7 @@ namespace ILCompiler.ObjectWriter
                 SectionWriter pdataSectionWriter;
                 bool shareSymbol = ShouldShareSymbol((ObjectNode)nodeWithCodeInfo);
 
+                Span<byte> unwindSymbolBuffer = stackalloc byte[256];
                 for (int i = 0; i < frameInfos.Length; i++)
                 {
                     FrameInfo frameInfo = frameInfos[i];
@@ -392,7 +393,7 @@ namespace ILCompiler.ObjectWriter
                     int end = frameInfo.EndOffset;
                     byte[] blob = frameInfo.BlobData;
 
-                    Utf8String unwindSymbolName = new Utf8String($"_unwind{i}{currentSymbolName}"); // TODO: Check again
+                    Utf8String unwindSymbolName = Utf8String.Create(unwindSymbolBuffer, $"_unwind{i}{currentSymbolName}");
 
                     if (shareSymbol)
                     {
@@ -438,14 +439,14 @@ namespace ILCompiler.ObjectWriter
                         {
                             xdataSectionWriter.EmitSymbolReference(
                                 IMAGE_REL_BASED_ADDR32NB,
-                                GetMangledExternCName(associatedDataNode));
+                                GetMangledName(associatedDataNode));
                         }
 
                         if (ehInfo is not null)
                         {
                             xdataSectionWriter.EmitSymbolReference(
                                 IMAGE_REL_BASED_ADDR32NB,
-                                GetMangledExternCName(ehInfo));
+                                GetMangledName(ehInfo));
                         }
 
                         if (nodeWithCodeInfo.GCInfo is not null)

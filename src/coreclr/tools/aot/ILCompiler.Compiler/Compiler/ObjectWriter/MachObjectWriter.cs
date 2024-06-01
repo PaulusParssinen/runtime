@@ -751,7 +751,7 @@ namespace ILCompiler.ObjectWriter
             }
         }
 
-        private protected override Utf8String AppendExternCName(Utf8String name) => new Utf8String("_" + name);
+        private protected override Utf8String ExternCName(Utf8String name) => new Utf8String("_" + name);
 
         // This represents the following DWARF code:
         //   DW_CFA_advance_loc: 4

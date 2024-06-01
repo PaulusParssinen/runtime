@@ -2,14 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using ILCompiler.DependencyAnalysis;
 using Internal.Text;
 using Internal.TypeSystem;
 using Internal.TypeSystem.Ecma;
@@ -26,6 +24,8 @@ namespace ILCompiler
 
         private string _compilationUnitPrefix;
 
+        private static readonly SearchValues<char> s_asciiLetterOrDigit = SearchValues.Create("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+
         public override string CompilationUnitPrefix
         {
             get => _compilationUnitPrefix;
@@ -37,7 +37,9 @@ namespace ILCompiler
         /// </summary>
         public override void AppendSanitizedName(ReadOnlySpan<char> s, ref Utf8StringBuilder sb)
         {
-            // TODO: SearchValue.Create("A-z0-9").IndexOfAnyExcept fast-path?
+            // TODO: .IndexOfAnyExcept fast-path?
+            int indexOfAnyExcept = s.IndexOfAnyExcept(s_asciiLetterOrDigit);
+            _ = indexOfAnyExcept;
 
             int i = 0;
             if (s.Length > 0 && char.IsAsciiDigit(s[0]))
@@ -209,7 +211,7 @@ namespace ILCompiler
                 // This problem needs a better fix.
                 if (isSystemPrivate)
                 {
-                    moduleNameBuilder.Append("S_P_"u8);
+                    moduleNameBuilder.AppendLiteral("S_P_");
                     assemblyName = assemblyName.Slice(15);
                 }
 
