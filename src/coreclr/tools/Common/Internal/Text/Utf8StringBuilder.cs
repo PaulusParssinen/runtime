@@ -12,7 +12,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Internal.Text
 {
-    // TODO: Mark this IDisposable when we get ref struct interfaces
     public ref struct Utf8StringBuilder
     {
         private byte[] _arrayToReturnToPool;

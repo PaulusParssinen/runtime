@@ -100,13 +100,13 @@ namespace ILCompiler.ObjectWriter
 
                 if (associatedDataNode is not null)
                 {
-                    Utf8String symbolName = GetMangledExternCName(associatedDataNode);
+                    Utf8String symbolName = GetMangledName(associatedDataNode);
                     lsdaSectionWriter.EmitSymbolReference(RelocType.IMAGE_REL_BASED_RELPTR32, symbolName, 0);
                 }
 
                 if (ehInfo is not null)
                 {
-                    Utf8String symbolName = GetMangledExternCName(ehInfo);
+                    Utf8String symbolName = GetMangledName(ehInfo);
                     lsdaSectionWriter.EmitSymbolReference(RelocType.IMAGE_REL_BASED_RELPTR32, symbolName, 0);
                 }
 
@@ -310,7 +310,7 @@ namespace ILCompiler.ObjectWriter
                 arangeSectionWriter,
                 symbolName =>
                 {
-                    if (definedSymbols.TryGetValue(AppendExternCName(symbolName), out SymbolDefinition symbolDef) &&
+                    if (definedSymbols.TryGetValue(ExternCName(symbolName), out SymbolDefinition symbolDef) &&
                         _sections[symbolDef.SectionIndex] is UnixSectionDefinition section)
                     {
                         return (section.SymbolName, symbolDef.Value);

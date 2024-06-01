@@ -152,18 +152,5 @@ namespace Internal.Text
 
             public void AppendFormatted(string value) => AppendFormatted(value.AsSpan());
         }
-
-        // TODO: Where to put this..?
-        public sealed class Comparer : IEqualityComparer<Utf8String>//, IAlternateEqualityComparer<ReadOnlySpan<byte>, Utf8String>
-        {
-            public static readonly Comparer Instance = new();
-
-            bool IEqualityComparer<Utf8String>.Equals(Utf8String x, Utf8String y) => x.Equals(y);
-            int IEqualityComparer<Utf8String>.GetHashCode(Utf8String obj) => obj.GetHashCode();
-
-            //bool IAlternateEqualityComparer<ReadOnlySpan<byte>, Utf8String>.Equals(ReadOnlySpan<byte> span, Utf8String target) => span.SequenceEqual(target.AsSpan());
-            //int IAlternateEqualityComparer<ReadOnlySpan<byte>, Utf8String>.GetHashCode(ReadOnlySpan<byte> span) => Utf8String.GetHashCode(span);
-            //Utf8String IAlternateEqualityComparer<ReadOnlySpan<byte>, Utf8String>.Create(ReadOnlySpan<byte> span) => new Utf8String(span.ToArray());
-        }
     }
 }

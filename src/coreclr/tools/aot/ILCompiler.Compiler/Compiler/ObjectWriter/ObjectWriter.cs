@@ -260,15 +260,15 @@ namespace ILCompiler.ObjectWriter
             IDictionary<Utf8String, SymbolDefinition> definedSymbols,
             SortedSet<Utf8String> undefinedSymbols);
 
-        private protected virtual Utf8String AppendExternCName(Utf8String name) => name;
+        private protected virtual Utf8String ExternCName(Utf8String name) => name;
 
-        private protected Utf8String GetMangledExternCName(ISymbolNode symbolNode)
+        private protected Utf8String GetMangledName(ISymbolNode symbolNode)
         {
             Utf8String symbolName;
 
             if (!_mangledNameMap.TryGetValue(symbolNode, out symbolName))
             {
-                symbolName = AppendExternCName(symbolNode.GetMangledUtf8Name(_nodeFactory.NameMangler));
+                symbolName = ExternCName(symbolNode.GetMangledUtf8Name(_nodeFactory.NameMangler));
                 _mangledNameMap.Add(symbolNode, symbolName);
             }
 
@@ -404,7 +404,7 @@ namespace ILCompiler.ObjectWriter
                 Utf8String currentSymbolName = default;
                 if (symbolNode != null)
                 {
-                    currentSymbolName = GetMangledExternCName(symbolNode);
+                    currentSymbolName = GetMangledName(symbolNode);
                 }
 
                 ObjectNodeSection section = node.GetSection(_nodeFactory);
@@ -418,7 +418,7 @@ namespace ILCompiler.ObjectWriter
                 long thumbBit = _nodeFactory.Target.Architecture == TargetArchitecture.ARM && isMethod ? 1 : 0;
                 foreach (ISymbolDefinitionNode n in nodeContents.DefinedSymbols)
                 {
-                    Utf8String symbolName = n == node ? currentSymbolName : GetMangledExternCName(n);
+                    Utf8String symbolName = n == node ? currentSymbolName : GetMangledName(n);
 
                     sectionWriter.EmitSymbolDefinition(
                         symbolName,
@@ -428,7 +428,7 @@ namespace ILCompiler.ObjectWriter
                     if (_nodeFactory.NodeAliases.TryGetValue(n, out Utf8String alternateName))
                     {
                         sectionWriter.EmitSymbolDefinition(
-                            AppendExternCName(alternateName),
+                            ExternCName(alternateName),
                             n.Offset + thumbBit,
                             n.Offset == 0 && isMethod ? nodeContents.Data.Length : 0,
                             global: true);
@@ -506,7 +506,7 @@ namespace ILCompiler.ObjectWriter
 
                     if (node is INodeWithDebugInfo debugNode and ISymbolDefinitionNode symbolDefinitionNode)
                     {
-                        Utf8String methodName = GetMangledExternCName(symbolDefinitionNode);
+                        Utf8String methodName = GetMangledName(symbolDefinitionNode);
                         if (_definedSymbols.TryGetValue(methodName, out var methodSymbol))
                         {
                             if (node is IMethodNode methodNode)
