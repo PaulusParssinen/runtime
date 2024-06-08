@@ -130,14 +130,6 @@ namespace Internal.Text
                 {
                     _builder.AppendInvariant((IUtf8SpanFormattable)(object)value, default);
                 }
-                else if (typeof(T) == typeof(string))
-                {
-                    _builder.Append((string)(object)value);
-                }
-                else if (value is IFormattable)
-                {
-                    _builder.Append(((IFormattable)(object)value).ToString(null, CultureInfo.InvariantCulture));
-                }
                 else
                 {
                     // Fall back to object?.ToString

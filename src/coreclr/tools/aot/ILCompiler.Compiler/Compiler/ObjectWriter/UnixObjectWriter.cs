@@ -181,9 +181,10 @@ namespace ILCompiler.ObjectWriter
 
                 Utf8String[] newLsdaSymbols = null;
                 Utf8String[] emittedLsdaSymbols = null;
+                Span<byte> symbolNameBuffer = stackalloc byte[256];
                 if (ShouldShareSymbol((ObjectNode)nodeWithCodeInfo))
                 {
-                    lsdaSectionWriter = GetOrCreateSection(LsdaSection, currentSymbolName, new Utf8String($"_lsda0{currentSymbolName}"));
+                    lsdaSectionWriter = GetOrCreateSection(LsdaSection, currentSymbolName, Utf8String.Create(symbolNameBuffer, $"_lsda0{currentSymbolName}"));
                 }
                 else
                 {
@@ -212,14 +213,14 @@ namespace ILCompiler.ObjectWriter
                     }
                     else
                     {
-                        lsdaSymbolName = new Utf8String($"_lsda{i}{currentSymbolName}");
+                        lsdaSymbolName = Utf8String.Create(symbolNameBuffer, $"_lsda{i}{currentSymbolName}");
                         if (newLsdaSymbols != null)
                             newLsdaSymbols[i] = lsdaSymbolName;
                         lsdaSectionWriter.EmitSymbolDefinition(lsdaSymbolName);
                         EmitLsda(nodeWithCodeInfo, frameInfos, i, _lsdaSectionWriter, ref mainLsdaOffset);
                     }
 
-                    var framSymbolName = new Utf8String($"_fram{i}{currentSymbolName}");
+                    var framSymbolName = Utf8String.Create(symbolNameBuffer, $"_fram{i}{currentSymbolName}");
                     if (useFrameNames && start != 0)
                     {
                         sectionWriter.EmitSymbolDefinition(framSymbolName, start);

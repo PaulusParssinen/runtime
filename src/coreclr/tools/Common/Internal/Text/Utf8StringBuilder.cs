@@ -61,7 +61,9 @@ namespace Internal.Text
         {
             Debug.Assert(Ascii.IsValid(value));
 
-            EnsureCapacity(1);
+            if ((uint)(_pos + 1) > (uint)_bytes.Length)
+                Grow(1);
+
             _bytes[_pos++] = (byte)value;
         }
 
@@ -141,13 +143,6 @@ namespace Internal.Text
             Utf8String value = ToUtf8String();
             Dispose();
             return value;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void EnsureCapacity(int additionalBytes)
-        {
-            if ((uint)(_pos + additionalBytes) > (uint)_bytes.Length)
-                Grow(additionalBytes);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)] // keep consumers as streamlined as possible

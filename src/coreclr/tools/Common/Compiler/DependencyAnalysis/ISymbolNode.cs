@@ -82,7 +82,6 @@ namespace ILCompiler.DependencyAnalysis
             return sb.ToStringAndDispose();
         }
 
-        // TODO: Temporary
         public static Utf8String GetMangledUtf8Name(this ISymbolNode symbolNode, NameMangler nameMangler)
         {
             Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
