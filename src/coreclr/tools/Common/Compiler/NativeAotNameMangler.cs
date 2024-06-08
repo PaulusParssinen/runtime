@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+
 using Internal.Text;
 using Internal.TypeSystem;
 using Internal.TypeSystem.Ecma;
@@ -24,8 +25,6 @@ namespace ILCompiler
 
         private string _compilationUnitPrefix;
 
-        private static readonly SearchValues<char> s_asciiLetterOrDigit = SearchValues.Create("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-
         public override string CompilationUnitPrefix
         {
             get => _compilationUnitPrefix;
@@ -37,10 +36,6 @@ namespace ILCompiler
         /// </summary>
         public override void AppendSanitizedName(ReadOnlySpan<char> s, ref Utf8StringBuilder sb)
         {
-            // TODO: .IndexOfAnyExcept fast-path?
-            int indexOfAnyExcept = s.IndexOfAnyExcept(s_asciiLetterOrDigit);
-            _ = indexOfAnyExcept;
-
             int i = 0;
             if (s.Length > 0 && char.IsAsciiDigit(s[0]))
             {

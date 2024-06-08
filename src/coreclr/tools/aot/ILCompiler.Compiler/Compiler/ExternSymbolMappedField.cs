@@ -22,7 +22,7 @@ namespace ILCompiler
 
         public override string Name => _symbolName;
 
-        public Utf8String SymbolName => new Utf8String(_symbolName); // TODO: Look again.
+        public string SymbolName => _symbolName;
 
         public override DefType OwningType => _fieldType.Context.SystemModule.GetGlobalModuleType();
 
