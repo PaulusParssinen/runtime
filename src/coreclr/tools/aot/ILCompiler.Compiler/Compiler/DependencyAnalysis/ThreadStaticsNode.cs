@@ -37,19 +37,20 @@ namespace ILCompiler.DependencyAnalysis
             factory.ThreadStaticsRegion.AddEmbeddedObject(this);
         }
 
-        public static string GetMangledName(TypeDesc type, NameMangler nameMangler)
-        {
-            return nameMangler.NodeMangler.ThreadStatics(type);
-        }
-
         int ISymbolNode.Offset => 0;
 
         int ISymbolDefinitionNode.Offset => OffsetFromBeginningOfArray;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            string mangledName = _type == null ? "_inlinedThreadStatics" : GetMangledName(_type, nameMangler);
-            sb.Append(mangledName);
+            if (_type == null)
+            {
+                sb.AppendLiteral("_inlinedThreadStatics");
+            }
+            else
+            {
+                nameMangler.NodeMangler.AppendThreadStatics(_type, ref sb);
+            }
         }
 
         private ISymbolNode GetGCStaticEETypeNode(NodeFactory factory)

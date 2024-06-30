@@ -11,6 +11,7 @@ using ILCompiler.DependencyAnalysisFramework;
 
 using Internal.IL;
 using Internal.IL.Stubs;
+using Internal.Text;
 using Internal.TypeSystem;
 using Internal.TypeSystem.Ecma;
 
@@ -138,7 +139,7 @@ namespace ILCompiler
             }
             else if (field is ExternSymbolMappedField externField)
             {
-                return NodeFactory.ExternVariable(externField.SymbolName);
+                return NodeFactory.ExternVariable(new Utf8String(externField.SymbolName));
             }
             else
             {
@@ -329,7 +330,7 @@ namespace ILCompiler
                 case ReadyToRunHelperId.ObjectAllocator:
                     {
                         var type = (TypeDesc)targetOfLookup;
-                        return NodeFactory.ExternSymbol(JitHelper.GetNewObjectHelperForType(type));
+                        return NodeFactory.ExternSymbol(new Utf8String(JitHelper.GetNewObjectHelperForType(type)));
                     }
 
                 default:

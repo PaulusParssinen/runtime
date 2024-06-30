@@ -35,7 +35,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public int Size => _manifestNode.ManifestAssemblyMvidTableSize;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("__ManifestAssemblyMvids"u8);
@@ -43,8 +43,8 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         protected override string GetName(NodeFactory nodeFactory)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            AppendMangledName(nodeFactory.NameMangler, sb);
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            AppendMangledName(nodeFactory.NameMangler, ref sb);
             return sb.ToString();
         }
 

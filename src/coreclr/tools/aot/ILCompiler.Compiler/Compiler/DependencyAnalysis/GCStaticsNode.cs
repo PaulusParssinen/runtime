@@ -31,17 +31,19 @@ namespace ILCompiler.DependencyAnalysis
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.NodeMangler.GCStatics(_type));
+            nameMangler.NodeMangler.AppendGCStatics(_type, ref sb);
         }
 
         public int Offset => 0;
         public MetadataType Type => _type;
 
-        public static string GetMangledName(TypeDesc type, NameMangler nameMangler)
+        public static Utf8String GetMangledName(TypeDesc type, NameMangler nameMangler)
         {
-            return nameMangler.NodeMangler.GCStatics(type);
+            var sb = new Utf8StringBuilder(stackalloc byte[128]);
+            nameMangler.NodeMangler.AppendGCStatics(type, ref sb);
+            return sb.ToUtf8StringAndDispose();
         }
 
         private ISymbolNode GetGCStaticEETypeNode(NodeFactory factory)

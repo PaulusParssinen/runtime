@@ -47,9 +47,7 @@ namespace ILCompiler
             var symbolNode = node as ISymbolNode;
             if (symbolNode != null)
             {
-                Utf8StringBuilder sb = new Utf8StringBuilder();
-                symbolNode.AppendMangledName(nodeFactory.NameMangler, sb);
-                name = sb.ToString();
+                name = symbolNode.GetMangledName(nodeFactory.NameMangler);
                 _writer.WriteAttributeString("Name", name);
             }
 

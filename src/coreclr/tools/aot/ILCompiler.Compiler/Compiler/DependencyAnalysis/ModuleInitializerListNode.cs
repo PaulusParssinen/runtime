@@ -17,9 +17,9 @@ namespace ILCompiler.DependencyAnalysis
 
         int INodeWithSize.Size => _size.Value;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__module_initializers"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__module_initializers");
         }
 
         public int Offset => 0;

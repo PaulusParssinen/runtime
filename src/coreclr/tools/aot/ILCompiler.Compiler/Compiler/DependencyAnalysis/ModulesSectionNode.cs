@@ -23,9 +23,9 @@ namespace ILCompiler.DependencyAnalysis
 
         public override bool StaticDependenciesAreComputed => true;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__Module"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__Module");
         }
         public int Offset => 0;
         public override bool IsShareable => false;

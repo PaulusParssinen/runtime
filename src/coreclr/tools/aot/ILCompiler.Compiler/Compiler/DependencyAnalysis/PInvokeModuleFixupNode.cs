@@ -24,10 +24,10 @@ namespace ILCompiler.DependencyAnalysis
             _pInvokeModuleData = pInvokeModuleData;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__nativemodule_"u8);
-            _pInvokeModuleData.AppendMangledName(nameMangler, sb);
+            sb.AppendLiteral("__nativemodule_");
+            _pInvokeModuleData.AppendMangledName(nameMangler, ref sb);
         }
         public int Offset => 0;
         public override bool IsShareable => true;
@@ -120,15 +120,15 @@ namespace ILCompiler.DependencyAnalysis
             return Nullable.Compare(DllImportSearchPath, other.DllImportSearchPath);
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.GetMangledTypeName(DeclaringModule.GetGlobalModuleType()));
+            nameMangler.AppendMangledTypeName(DeclaringModule.GetGlobalModuleType(), ref sb);
             sb.Append('_');
-            sb.Append(nameMangler.SanitizeName(ModuleName));
+            nameMangler.AppendSanitizedName(ModuleName, ref sb);
             if (DllImportSearchPath.HasValue)
             {
                 sb.Append('_');
-                sb.Append(((int)DllImportSearchPath.Value).ToString());
+                sb.AppendInvariant((int)DllImportSearchPath.Value);
             }
         }
     }

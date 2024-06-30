@@ -29,9 +29,9 @@ namespace ILCompiler.DependencyAnalysis
             _interfaceImpls = new Dictionary<object, Dictionary<TypeDesc, HashSet<int>>>();
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__interface_gvm_table"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__interface_gvm_table");
         }
         int INodeWithSize.Size => _size.Value;
         public int Offset => 0;

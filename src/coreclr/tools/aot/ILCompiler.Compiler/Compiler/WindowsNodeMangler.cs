@@ -1,15 +1,19 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using ILLink.Shared.TrimAnalysis;
+using Internal.Text;
 using Internal.TypeSystem;
+using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ILCompiler
 {
     //
     // The naming format of these names is known to the debugger
     //
-    public class WindowsNodeMangler : NodeMangler
+    public sealed class WindowsNodeMangler : NodeMangler
     {
         private TargetDetails _target;
 
@@ -24,67 +28,73 @@ namespace ILCompiler
         }
 
         // Mangled name of boxed version of a type
-        public sealed override string MangledBoxedTypeName(TypeDesc type)
+        public sealed override void AppendMangledBoxedTypeName(TypeDesc type, ref Utf8StringBuilder sb)
         {
             Debug.Assert(type.IsValueType);
-            return "Boxed_" + NameMangler.GetMangledTypeName(type);
+            sb.AppendLiteral("Boxed_");
+            NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
-        public sealed override string MethodTable(TypeDesc type)
+        public sealed override void AppendMethodTable(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            string mangledJustTypeName;
-
-            if (type.IsValueType)
-                mangledJustTypeName = MangledBoxedTypeName(type);
-            else
-                mangledJustTypeName = NameMangler.GetMangledTypeName(type);
-
             // "??_7TypeName@@6B@" is the C++ mangling for "const TypeName::`vftable'"
             // This, along with LF_VTSHAPE debug records added by the object writer
             // is the debugger magic that allows debuggers to vcast types to their bases.
-            return "??_7" + mangledJustTypeName + "@@6B@";
+
+            sb.AppendLiteral("??_7");
+            if (type.IsValueType)
+                AppendMangledBoxedTypeName(type, ref sb);
+            else
+                NameMangler.AppendMangledTypeName(type, ref sb);
+            sb.AppendLiteral("@@6B@");
         }
 
-        private string CreateStaticFieldName(TypeDesc type, string fieldName)
+        private void AppendStaticFieldName(TypeDesc type, [ConstantExpected] string fieldName, ref Utf8StringBuilder sb)
         {
-            return @$"?{fieldName}@{NameMangler.GetMangledTypeName(type)}@@";
+            sb.AppendInterpolated($"?{fieldName}@");
+            NameMangler.AppendMangledTypeName(type, ref sb);
+            sb.AppendLiteral("@@");
         }
 
-        public sealed override string GCStatics(TypeDesc type)
+        public sealed override void AppendGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return CreateStaticFieldName(type, GCStaticMemberName);
+            AppendStaticFieldName(type, GCStaticMemberName, ref sb);
         }
 
-        public sealed override string NonGCStatics(TypeDesc type)
+        public sealed override void AppendNonGCStatics(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return CreateStaticFieldName(type, NonGCStaticMemberName);
+            AppendStaticFieldName(type, NonGCStaticMemberName, ref sb);
         }
 
-        public sealed override string ThreadStatics(TypeDesc type)
+        public sealed override void AppendThreadStatics(TypeDesc type, scoped ref Utf8StringBuilder sb)
         {
-            return CreateStaticFieldName(type, NameMangler.CompilationUnitPrefix + ThreadStaticMemberName);
+            sb.AppendInterpolated($"?{NameMangler.CompilationUnitPrefix}{ThreadStaticMemberName}@");
+            NameMangler.AppendMangledTypeName(type, ref sb);
+            sb.AppendLiteral("@@");
         }
 
-        public sealed override string ThreadStaticsIndex(TypeDesc type)
+        public sealed override void AppendThreadStaticsIndex(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return CreateStaticFieldName(type, ThreadStaticIndexName);
+            AppendStaticFieldName(type, ThreadStaticIndexName, ref sb);
         }
 
-        public sealed override string TypeGenericDictionary(TypeDesc type)
+        public sealed override void AppendTypeGenericDictionary(TypeDesc type, ref Utf8StringBuilder sb)
         {
-            return GenericDictionaryNamePrefix + NameMangler.GetMangledTypeName(type);
+            sb.AppendLiteral(GenericDictionaryNamePrefix);
+            NameMangler.AppendMangledTypeName(type, ref sb);
         }
 
-        public sealed override string MethodGenericDictionary(MethodDesc method)
+        public sealed override void AppendMethodGenericDictionary(MethodDesc method, ref Utf8StringBuilder sb)
         {
-            return GenericDictionaryNamePrefix + NameMangler.GetMangledMethodName(method);
+            sb.AppendLiteral(GenericDictionaryNamePrefix);
+            NameMangler.AppendMangledMethodName(method, ref sb);
         }
 
-        public sealed override string ExternMethod(string unmangledName, MethodDesc method)
+        public sealed override Utf8String ExternMethod(string unmangledName, MethodDesc method)
         {
             if (_target.Architecture != TargetArchitecture.X86)
             {
-                return unmangledName;
+                return new Utf8String(unmangledName);
             }
 
             UnmanagedCallingConventions callConv;
@@ -102,7 +112,7 @@ namespace ILCompiler
             else
             {
                 Debug.Assert(method is Internal.TypeSystem.Ecma.EcmaMethod ecmaMethod && (ecmaMethod.GetRuntimeImportName() != null || ecmaMethod.GetRuntimeExportName() != null));
-                return unmangledName;
+                return new Utf8String(unmangledName);
             }
 
             int signatureBytes = 0;
@@ -111,23 +121,24 @@ namespace ILCompiler
                 signatureBytes += AlignmentHelper.AlignUp(p.GetElementSize().AsInt, _target.PointerSize);
             }
 
+            Span<byte> scratchBuffer = stackalloc byte[256];
             return callConv switch
             {
-                UnmanagedCallingConventions.Stdcall => $"_{unmangledName}@{signatureBytes}",
-                UnmanagedCallingConventions.Fastcall => $"@{unmangledName}@{signatureBytes}",
-                UnmanagedCallingConventions.Cdecl => $"_{unmangledName}",
+                UnmanagedCallingConventions.Stdcall => Utf8String.Create(scratchBuffer, $"_{unmangledName}@{signatureBytes}"),
+                UnmanagedCallingConventions.Fastcall => Utf8String.Create(scratchBuffer, $"@{unmangledName}@{signatureBytes}"),
+                UnmanagedCallingConventions.Cdecl => Utf8String.Create(scratchBuffer, $"_{unmangledName}"),
                 _ => throw new System.NotImplementedException()
             };
         }
 
-        public sealed override string ExternVariable(string unmangledName)
+        public sealed override Utf8String ExternVariable(Utf8String unmangledName)
         {
             if (_target.Architecture != TargetArchitecture.X86)
             {
                 return unmangledName;
             }
 
-            return $"_{unmangledName}";
+            return Utf8String.Create(stackalloc byte[128], $"_{unmangledName}");
         }
     }
 }

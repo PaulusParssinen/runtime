@@ -30,9 +30,9 @@ namespace ILCompiler.DependencyAnalysis
 
         int INodeWithSize.Size => _size.Value;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__external_" + _blobName + "_references");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__external_{_blobName}_references");
         }
         public int Offset => 0;
         public override bool IsShareable => false;

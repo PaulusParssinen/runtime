@@ -31,9 +31,10 @@ namespace ILCompiler.DependencyAnalysis
 
         public override ObjectNodeSection GetSection(NodeFactory factory) => _type.Context.Target.IsWindows ? ObjectNodeSection.FoldableReadOnlyDataSection : ObjectNodeSection.DataSection;
 
-        public virtual void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix + "__SealedVTable_" + nameMangler.NodeMangler.MethodTable(_type));
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__SealedVTable_");
+            nameMangler.NodeMangler.AppendMethodTable(_type, ref sb);
         }
 
         int ISymbolNode.Offset => 0;

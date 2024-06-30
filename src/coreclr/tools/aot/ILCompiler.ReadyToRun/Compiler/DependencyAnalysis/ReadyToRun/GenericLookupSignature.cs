@@ -140,7 +140,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return dependencies;
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append("GenericLookupSignature("u8);
@@ -150,34 +150,34 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             sb.Append(": "u8);
             if (_methodArgument != null)
             {
-                sb.Append(nameMangler.GetMangledTypeName(_methodArgument.OwningType));
+                nameMangler.AppendMangledTypeName(_methodArgument.OwningType, ref sb);
                 sb.Append("::"u8);
-                sb.Append(nameMangler.GetMangledMethodName(_methodArgument.Method));
+                nameMangler.AppendMangledMethodName(_methodArgument.Method, ref sb);
                 if (_methodArgument.ConstrainedType != null)
                 {
-                    sb.Append("@"u8);
-                    sb.Append(nameMangler.GetMangledTypeName(_methodArgument.ConstrainedType));
+                    sb.Append('@');
+                    nameMangler.AppendMangledTypeName(_methodArgument.ConstrainedType, ref sb);
                 }
                 if (!_methodArgument.Token.IsNull)
                 {
                     sb.Append(" ["u8);
                     sb.Append(_methodArgument.Token.MetadataReader.GetString(_methodArgument.Token.MetadataReader.GetAssemblyDefinition().Name));
-                    sb.Append(":"u8);
+                    sb.Append(':');
                     sb.Append(((uint)_methodArgument.Token.Token).ToString("X8"));
-                    sb.Append("]"u8);
+                    sb.Append(']');
                 }
             }
             if (_typeArgument != null)
             {
-                sb.Append(nameMangler.GetMangledTypeName(_typeArgument));
+                nameMangler.AppendMangledTypeName(_typeArgument, ref sb);
             }
             if (_fieldArgument != null)
             {
-                _fieldArgument.AppendMangledName(nameMangler, sb);
+                _fieldArgument.AppendMangledName(nameMangler, ref sb);
             }
             sb.Append(" ("u8);
-            _methodContext.AppendMangledName(nameMangler, sb);
-            sb.Append(")"u8);
+            _methodContext.AppendMangledName(nameMangler, ref sb);
+            sb.Append(')');
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

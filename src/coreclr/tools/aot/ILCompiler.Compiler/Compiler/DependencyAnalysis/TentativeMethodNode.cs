@@ -55,12 +55,12 @@ namespace ILCompiler.DependencyAnalysis
         public override bool HasDynamicDependencies => false;
         public override bool HasConditionalStaticDependencies => false;
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             // We use the same mangled name as the underlying real method body.
             // This is okay since this node will go out of the way if the real body is marked
             // and part of the graph.
-            _methodNode.AppendMangledName(nameMangler, sb);
+            _methodNode.AppendMangledName(nameMangler, ref sb);
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

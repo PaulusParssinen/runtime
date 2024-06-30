@@ -22,10 +22,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override int ClassCode => 892356612;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append("MethodGCInfoNode->"u8);
-            _methodNode.AppendMangledName(nameMangler, sb);
+            _methodNode.AppendMangledName(nameMangler, ref sb);
         }
 
         protected override void OnMarked(NodeFactory factory)
@@ -277,9 +277,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         protected override string GetName(NodeFactory context)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
             sb.Append("MethodGCInfo->"u8);
-            _methodNode.AppendMangledName(context.NameMangler, sb);
+            _methodNode.AppendMangledName(context.NameMangler, ref sb);
             return sb.ToString();
         }
 

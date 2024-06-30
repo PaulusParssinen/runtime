@@ -35,7 +35,7 @@ namespace ILCompiler.DependencyAnalysis
 
         int ISymbolNode.Offset => 0;
 
-        public abstract void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb);
+        public abstract void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb);
 
         protected abstract int HeaderSize { get; }
 
@@ -96,9 +96,9 @@ namespace ILCompiler.DependencyAnalysis
     {
         private TypeDesc _owningType;
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.NodeMangler.TypeGenericDictionary(_owningType));
+            nameMangler.NodeMangler.AppendTypeGenericDictionary(_owningType, ref sb);
         }
 
         protected override int HeaderSize => 0;
@@ -186,9 +186,9 @@ namespace ILCompiler.DependencyAnalysis
     {
         private MethodDesc _owningMethod;
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.NodeMangler.MethodGenericDictionary(_owningMethod));
+            nameMangler.NodeMangler.AppendMethodGenericDictionary(_owningMethod, ref sb);
         }
         protected override int HeaderSize => _owningMethod.Context.Target.PointerSize;
         public override Instantiation TypeInstantiation => _owningMethod.OwningType.Instantiation;

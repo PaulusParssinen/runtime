@@ -29,9 +29,14 @@ namespace ILCompiler.DependencyAnalysis
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__InterfaceDispatchMap_"u8).Append(nameMangler.SanitizeName(nameMangler.GetMangledTypeName(_type)));
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__InterfaceDispatchMap_");
+            // TODO: There was nameMangler.AppendSanitizedName here for the type.. The mangled type name should already be sanitized, right? Otherwise we have inconsistencies.
+            //
+            // UPDATE: Yup.. It is inconsistent.
+            // There's atleast 1100~ unsanitized mangled typenames in the map.xml for repro.csproj
+            nameMangler.AppendMangledTypeName(_type, ref sb);
         }
 
         public int Offset => 0;

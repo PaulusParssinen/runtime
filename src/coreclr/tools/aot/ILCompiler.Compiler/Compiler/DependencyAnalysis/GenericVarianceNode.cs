@@ -23,14 +23,14 @@ namespace ILCompiler.DependencyAnalysis
             _details = details;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__GenericVariance"u8);
+            sb.AppendLiteral("__GenericVariance");
 
             for (int i = 0; i < _details.Variance.Length; i++)
             {
                 sb.Append('_');
-                sb.Append((checked((byte)_details.Variance[i])).ToStringInvariant());
+                sb.AppendInvariant(checked((byte)_details.Variance[i]));
             }
         }
 

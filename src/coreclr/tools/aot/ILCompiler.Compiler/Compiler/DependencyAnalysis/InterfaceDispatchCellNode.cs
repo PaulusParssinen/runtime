@@ -27,16 +27,15 @@ namespace ILCompiler.DependencyAnalysis
             _callSiteIdentifier = callSiteIdentifier;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix)
-                .Append("__InterfaceDispatchCell_"u8)
-                .Append(nameMangler.GetMangledMethodName(_targetMethod));
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__InterfaceDispatchCell_");
+            nameMangler.AppendMangledMethodName(_targetMethod, ref sb);
 
             if (_callSiteIdentifier != null)
             {
                 sb.Append('_');
-                _callSiteIdentifier.AppendMangledName(nameMangler, sb);
+                _callSiteIdentifier.AppendMangledName(nameMangler, ref sb);
             }
         }
 

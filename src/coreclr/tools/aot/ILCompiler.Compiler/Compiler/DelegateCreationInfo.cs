@@ -304,23 +304,23 @@ namespace ILCompiler
             }
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__DelegateCtor_"u8);
+            sb.AppendLiteral("__DelegateCtor_");
             if (TargetNeedsVTableLookup)
-                sb.Append("FromVtbl_"u8);
-            Constructor.AppendMangledName(nameMangler, sb);
-            sb.Append("__"u8);
-            sb.Append(nameMangler.GetMangledMethodName(_targetMethod));
+                sb.AppendLiteral("FromVtbl_");
+            Constructor.AppendMangledName(nameMangler, ref sb);
+            sb.AppendLiteral("__");
+            nameMangler.AppendMangledMethodName(_targetMethod, ref sb);
             if (_constrainedType != null)
             {
-                sb.Append("__"u8);
-                nameMangler.GetMangledTypeName(_constrainedType);
+                sb.AppendLiteral("__");
+                nameMangler.AppendMangledTypeName(_constrainedType, ref sb);
             }
             if (Thunk != null)
             {
-                sb.Append("__"u8);
-                Thunk.AppendMangledName(nameMangler, sb);
+                sb.AppendLiteral("__");
+                Thunk.AppendMangledName(nameMangler, ref sb);
             }
         }
 

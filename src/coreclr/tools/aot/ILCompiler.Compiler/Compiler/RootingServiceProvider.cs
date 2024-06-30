@@ -3,7 +3,7 @@
 
 using ILCompiler.DependencyAnalysis;
 using ILCompiler.DependencyAnalysisFramework;
-
+using Internal.Text;
 using Internal.TypeSystem;
 
 using Debug = System.Diagnostics.Debug;
@@ -31,8 +31,8 @@ namespace ILCompiler
 
             if (exportName != null)
             {
-                exportName = _factory.NameMangler.NodeMangler.ExternMethod(exportName, method);
-                _factory.NodeAliases.Add(methodEntryPoint, exportName);
+                Utf8String mangledExportName = _factory.NameMangler.NodeMangler.ExternMethod(exportName, method);
+                _factory.NodeAliases.Add(methodEntryPoint, mangledExportName);
             }
 
             if (canonMethod != method && method.HasInstantiation)
@@ -142,10 +142,10 @@ namespace ILCompiler
 
         public void RootReadOnlyDataBlob(byte[] data, int alignment, string reason, string exportName)
         {
-            var blob = _factory.ReadOnlyDataBlob("__readonlydata_" + exportName, data, alignment);
+            var blob = _factory.ReadOnlyDataBlob(new Utf8String($"__readonlydata_{exportName}"), data, alignment);
             _rootAdder(blob, reason);
-            exportName = _factory.NameMangler.NodeMangler.ExternVariable(exportName);
-            _factory.NodeAliases.Add(blob, exportName);
+            Utf8String mangledExportName = _factory.NameMangler.NodeMangler.ExternVariable(new Utf8String(exportName));
+            _factory.NodeAliases.Add(blob, mangledExportName);
         }
 
         public void RootDelegateMarshallingData(DefType type, string reason)

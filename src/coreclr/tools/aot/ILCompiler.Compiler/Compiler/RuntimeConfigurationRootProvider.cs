@@ -49,9 +49,9 @@ namespace ILCompiler
 
             public override bool StaticDependenciesAreComputed => true;
 
-            public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+            public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
             {
-                sb.Append(nameMangler.NodeMangler.ExternVariable(_blobName));
+                sb.Append(nameMangler.NodeMangler.ExternVariable(new Utf8String(_blobName)));
             }
 
             public override ObjectNodeSection GetSection(NodeFactory factory) =>
@@ -81,7 +81,7 @@ namespace ILCompiler
                         if (!valueDict.TryGetValue(value, out ISymbolNode valueNode))
                         {
                             valueNode = factory.ReadOnlyDataBlob(
-                                new Utf8String(_blobName + "_value_" + valueIndex++),
+                                new Utf8String($"{_blobName}_value_{valueIndex++}"),
                                 Utf8NullTerminatedBytes(value),
                                 alignment: 1);
                             valueDict.Add(value, valueNode);
@@ -101,7 +101,7 @@ namespace ILCompiler
                 foreach (string key in settings.Keys)
                 {
                     ISymbolNode node = factory.ReadOnlyDataBlob(
-                                new Utf8String(_blobName + "_key_" + i++),
+                                new Utf8String($"{_blobName}_key_{i++}"),
                                 Utf8NullTerminatedBytes(key),
                                 alignment: 1);
                     builder.EmitPointerReloc(node);

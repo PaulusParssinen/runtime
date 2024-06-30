@@ -26,9 +26,9 @@ namespace ILCompiler.DependencyAnalysis
 
         public MethodDesc Method => _allocationMethod;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.GetMangledMethodName(_allocationMethod));
+            nameMangler.AppendMangledMethodName(_allocationMethod, ref sb);
         }
         public int Offset => 0;
         public bool RepresentsIndirectionCell => false;

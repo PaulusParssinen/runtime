@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using Internal.Text;
 using Internal.TypeSystem;
 using static ILCompiler.ObjectWriter.DwarfNative;
 
@@ -12,7 +13,7 @@ namespace ILCompiler.ObjectWriter
         public readonly byte PointerEncoding;
         public readonly byte LsdaEncoding;
         public readonly byte PersonalityEncoding;
-        public readonly string PersonalitySymbolName;
+        public readonly Utf8String PersonalitySymbolName;
         public readonly uint CodeAlignFactor;
         public readonly int DataAlignFactor;
         public readonly bool IsSignalFrame;
@@ -30,7 +31,7 @@ namespace ILCompiler.ObjectWriter
 
             // Unused
             PersonalityEncoding = 0;
-            PersonalitySymbolName = null;
+            PersonalitySymbolName = default(Utf8String);
 
             // NOTE: Apple linker only knows how to handle DW_EH_PE_pcrel in combination with
             // DW_EH_PE_sdata4 or DW_EH_PE_ptr.

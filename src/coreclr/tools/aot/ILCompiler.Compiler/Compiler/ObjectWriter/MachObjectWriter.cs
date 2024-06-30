@@ -12,6 +12,7 @@ using System.Numerics;
 using System.Text;
 using ILCompiler.DependencyAnalysis;
 using ILCompiler.DependencyAnalysisFramework;
+using Internal.Text;
 using Internal.TypeSystem;
 using static ILCompiler.DependencyAnalysis.RelocType;
 using static ILCompiler.ObjectWriter.MachNative;
@@ -56,7 +57,7 @@ namespace ILCompiler.ObjectWriter
     /// </remarks>
     internal sealed class MachObjectWriter : UnixObjectWriter
     {
-        private sealed record CompactUnwindCode(string PcStartSymbolName, uint PcLength, uint Code, string LsdaSymbolName = null, string PersonalitySymbolName = null);
+        private sealed record CompactUnwindCode(Utf8String PcStartSymbolName, uint PcLength, uint Code, Utf8String LsdaSymbolName = default, Utf8String PersonalitySymbolName = default);
 
         private readonly TargetOS _targetOS;
         private readonly uint _cpuType;
@@ -70,7 +71,7 @@ namespace ILCompiler.ObjectWriter
         private readonly uint _compactUnwindDwarfCode;
 
         // Symbol table
-        private readonly Dictionary<string, uint> _symbolNameToIndex = new();
+        private readonly Dictionary<Utf8String, uint> _symbolNameToIndex = new();
         private readonly List<MachSymbol> _symbolTable = new();
         private readonly MachDynamicLinkEditSymbolTable _dySymbolTable = new();
 
@@ -110,7 +111,7 @@ namespace ILCompiler.ObjectWriter
             {
                 var machSymbol = new MachSymbol
                 {
-                    Name = $"lsection{sectionIndex}",
+                    Name = new Utf8String($"lsection{sectionIndex}"),
                     Section = section,
                     Value = section.VirtualAddress,
                     Descriptor = 0,
@@ -301,9 +302,9 @@ namespace ILCompiler.ObjectWriter
             stringTable.Write(outputFileStream);
         }
 
-        private protected override void CreateSection(ObjectNodeSection section, string comdatName, string symbolName, Stream sectionStream)
+        private protected override void CreateSection(ObjectNodeSection section, Utf8String comdatName, Utf8String symbolName, Stream sectionStream)
         {
-            string segmentName = section.Name switch
+            string segmentName = section.Name.ToString() switch
             {
                 "rdata" => "__TEXT",
                 ".eh_frame" => "__TEXT",
@@ -315,7 +316,7 @@ namespace ILCompiler.ObjectWriter
                 }
             };
 
-            string sectionName = section.Name switch
+            string sectionName = section.Name.ToString() switch
             {
                 "text" => "__text",
                 "data" => "__data",
@@ -329,17 +330,17 @@ namespace ILCompiler.ObjectWriter
                 ".debug_str" => "__debug_str",
                 ".debug_line" => "__debug_line",
                 ".debug_loc" => "__debug_loc",
-                _ => section.Name
+                _ => section.Name.ToString()
             };
 
-            uint flags = section.Name switch
+            uint flags = section.Name.ToString() switch
             {
                 "bss" => S_ZEROFILL,
                 ".eh_frame" => S_COALESCED,
                 _ => section.Type == SectionType.Uninitialized ? S_ZEROFILL : S_REGULAR
             };
 
-            flags |= section.Name switch
+            flags |= section.Name.ToString() switch
             {
                 ".dotnet_eh_table" => S_ATTR_DEBUG,
                 ".eh_frame" => S_ATTR_LIVE_SUPPORT | S_ATTR_STRIP_STATIC_SYMS | S_ATTR_NO_TOC,
@@ -360,7 +361,7 @@ namespace ILCompiler.ObjectWriter
             int sectionIndex = _sections.Count;
             _sections.Add(machSection);
 
-            base.CreateSection(section, comdatName, symbolName ?? $"lsection{sectionIndex}", sectionStream);
+            base.CreateSection(section, comdatName, symbolName != default(Utf8String) ? symbolName : new Utf8String($"lsection{sectionIndex}"), sectionStream);
         }
 
         protected internal override void UpdateSectionAlignment(int sectionIndex, int alignment)
@@ -375,7 +376,7 @@ namespace ILCompiler.ObjectWriter
             long offset,
             Span<byte> data,
             RelocType relocType,
-            string symbolName,
+            Utf8String symbolName,
             long addend)
         {
             // Mach-O doesn't use relocations between DWARF sections, so embed the offsets directly
@@ -461,8 +462,8 @@ namespace ILCompiler.ObjectWriter
         }
 
         private protected override void EmitSymbolTable(
-            IDictionary<string, SymbolDefinition> definedSymbols,
-            SortedSet<string> undefinedSymbols)
+            IDictionary<Utf8String, SymbolDefinition> definedSymbols,
+            SortedSet<Utf8String> undefinedSymbols)
         {
             // We already emitted symbols for all non-debug sections in EmitSectionsAndLayout,
             // these symbols are local and we need to account for them.
@@ -472,7 +473,7 @@ namespace ILCompiler.ObjectWriter
 
             // Sort and insert all defined symbols
             var sortedDefinedSymbols = new List<MachSymbol>(definedSymbols.Count);
-            foreach ((string name, SymbolDefinition definition) in definedSymbols)
+            foreach ((Utf8String name, SymbolDefinition definition) in definedSymbols)
             {
                 MachSection section = _sections[definition.SectionIndex];
                 // Sections in our object file should not be altered during native linking as the runtime
@@ -487,7 +488,7 @@ namespace ILCompiler.ObjectWriter
                     Type = N_SECT | N_EXT,
                 });
             }
-            sortedDefinedSymbols.Sort((symA, symB) => string.CompareOrdinal(symA.Name, symB.Name));
+            sortedDefinedSymbols.Sort((symA, symB) => symA.Name.CompareTo(symB.Name));
             foreach (MachSymbol definedSymbol in sortedDefinedSymbols)
             {
                 _symbolTable.Add(definedSymbol);
@@ -499,7 +500,7 @@ namespace ILCompiler.ObjectWriter
             _dySymbolTable.ExternalSymbolsCount = (uint)definedSymbols.Count;
 
             uint savedSymbolIndex = symbolIndex;
-            foreach (string externSymbol in undefinedSymbols)
+            foreach (Utf8String externSymbol in undefinedSymbols)
             {
                 if (!_symbolNameToIndex.ContainsKey(externSymbol))
                 {
@@ -702,7 +703,7 @@ namespace ILCompiler.ObjectWriter
             }
         }
 
-        private void EmitCompactUnwindTable(IDictionary<string, SymbolDefinition> definedSymbols)
+        private void EmitCompactUnwindTable(IDictionary<Utf8String, SymbolDefinition> definedSymbols)
         {
             _compactUnwindStream = new MemoryStream(32 * _compactUnwindCodes.Count);
             // Preset the size of the compact unwind section which is not generated yet
@@ -726,10 +727,10 @@ namespace ILCompiler.ObjectWriter
                 EmitCompactUnwindSymbol(cu.LsdaSymbolName);
             }
 
-            void EmitCompactUnwindSymbol(string symbolName)
+            void EmitCompactUnwindSymbol(Utf8String symbolName)
             {
                 Span<byte> tempBuffer = stackalloc byte[8];
-                if (symbolName is not null)
+                if (symbolName != default(Utf8String))
                 {
                     SymbolDefinition symbol = definedSymbols[symbolName];
                     MachSection section = _sections[symbol.SectionIndex];
@@ -750,7 +751,7 @@ namespace ILCompiler.ObjectWriter
             }
         }
 
-        private protected override string ExternCName(string name) => "_" + name;
+        private protected override Utf8String ExternCName(Utf8String name) => new Utf8String("_" + name);
 
         // This represents the following DWARF code:
         //   DW_CFA_advance_loc: 4
@@ -773,7 +774,7 @@ namespace ILCompiler.ObjectWriter
             0x08, 0x01, 0x1D, 0x00, 0x00, 0x00, 0x00, 0x00
         };
 
-        private protected override bool EmitCompactUnwinding(string startSymbolName, ulong length, string lsdaSymbolName, byte[] blob)
+        private protected override bool EmitCompactUnwinding(Utf8String startSymbolName, ulong length, Utf8String lsdaSymbolName, byte[] blob)
         {
             uint encoding = _compactUnwindDwarfCode;
 
@@ -789,8 +790,8 @@ namespace ILCompiler.ObjectWriter
             _compactUnwindCodes.Add(new CompactUnwindCode(
                 PcStartSymbolName: startSymbolName,
                 PcLength: (uint)length,
-                Code: encoding | (encoding != _compactUnwindDwarfCode && lsdaSymbolName is not null ? 0x40000000u : 0), // UNWIND_HAS_LSDA
-                LsdaSymbolName: encoding != _compactUnwindDwarfCode ? lsdaSymbolName : null
+                Code: encoding | (encoding != _compactUnwindDwarfCode && lsdaSymbolName != default(Utf8String) ? 0x40000000u : 0), // UNWIND_HAS_LSDA
+                LsdaSymbolName: encoding != _compactUnwindDwarfCode ? lsdaSymbolName : default(Utf8String)
             ));
 
             return encoding != _compactUnwindDwarfCode;
@@ -798,7 +799,7 @@ namespace ILCompiler.ObjectWriter
 
         private protected override bool UseFrameNames => true;
 
-        private static bool IsSectionSymbolName(string symbolName) => symbolName.StartsWith('l');
+        private static bool IsSectionSymbolName(Utf8String symbolName) => symbolName.StartsWith('l');
 
         private struct MachHeader64
         {
@@ -948,7 +949,7 @@ namespace ILCompiler.ObjectWriter
 
         private sealed class MachSymbol
         {
-            public string Name { get; init; } = string.Empty;
+            public Utf8String Name { get; init; }
             public byte Type { get; init; }
             public MachSection Section { get; init; }
             public ushort Descriptor { get; init; }
@@ -1073,7 +1074,7 @@ namespace ILCompiler.ObjectWriter
             public MachStringTable()
             {
                 // Always start the table with empty string
-                GetStringOffset("");
+                GetStringOffset(new Utf8String([]));
             }
         }
     }

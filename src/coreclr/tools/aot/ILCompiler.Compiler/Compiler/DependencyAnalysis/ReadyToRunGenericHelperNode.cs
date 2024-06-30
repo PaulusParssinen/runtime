@@ -192,15 +192,15 @@ namespace ILCompiler.DependencyAnalysis
             return factory.MethodEntrypoint(factory.TypeSystemContext.GetHelperEntryPoint("ThrowHelpers", "ThrowUnavailableType"));
         }
 
-        protected void AppendLookupSignatureMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        protected void AppendLookupSignatureMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             if (_id != ReadyToRunHelperId.DelegateCtor)
             {
-                _lookupSignature.AppendMangledName(nameMangler, sb);
+                _lookupSignature.AppendMangledName(nameMangler, ref sb);
             }
             else
             {
-                ((DelegateCreationInfo)_target).AppendMangledName(nameMangler, sb);
+                ((DelegateCreationInfo)_target).AppendMangledName(nameMangler, ref sb);
             }
         }
 
@@ -334,16 +334,15 @@ namespace ILCompiler.DependencyAnalysis
         {
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            Utf8String mangledContextName;
-            if (_dictionaryOwner is MethodDesc)
-                mangledContextName = nameMangler.GetMangledMethodName((MethodDesc)_dictionaryOwner);
+            sb.AppendLiteral("__GenericLookupFromDict_");
+            if (_dictionaryOwner is MethodDesc method)
+                nameMangler.AppendMangledMethodName(method, ref sb);
             else
-                mangledContextName = nameMangler.GetMangledTypeName((TypeDesc)_dictionaryOwner);
-
-            sb.Append("__GenericLookupFromDict_"u8).Append(mangledContextName).Append("_"u8);
-            AppendLookupSignatureMangledName(nameMangler, sb);
+                nameMangler.AppendMangledTypeName((TypeDesc)_dictionaryOwner, ref sb);
+            sb.Append('_');
+            AppendLookupSignatureMangledName(nameMangler, ref sb);
         }
 
         public override int ClassCode => 1055354299;
@@ -356,16 +355,15 @@ namespace ILCompiler.DependencyAnalysis
         {
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            Utf8String mangledContextName;
-            if (_dictionaryOwner is MethodDesc)
-                mangledContextName = nameMangler.GetMangledMethodName((MethodDesc)_dictionaryOwner);
+            sb.AppendLiteral("__GenericLookupFromType_");
+            if (_dictionaryOwner is MethodDesc method)
+                nameMangler.AppendMangledMethodName(method, ref sb);
             else
-                mangledContextName = nameMangler.GetMangledTypeName((TypeDesc)_dictionaryOwner);
-
-            sb.Append("__GenericLookupFromType_"u8).Append(mangledContextName).Append("_"u8);
-            AppendLookupSignatureMangledName(nameMangler, sb);
+                nameMangler.AppendMangledTypeName((TypeDesc)_dictionaryOwner, ref sb);
+            sb.Append('_');
+            AppendLookupSignatureMangledName(nameMangler, ref sb);
         }
 
         public override int ClassCode => 913214059;

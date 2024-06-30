@@ -38,11 +38,11 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return dataBuilder.ToObjectData();
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($@"NewObjectSignature: ");
-            sb.Append(nameMangler.GetMangledTypeName(_typeDesc));
+            sb.Append("NewObjectSignature: "u8);
+            nameMangler.AppendMangledTypeName(_typeDesc, ref sb);
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

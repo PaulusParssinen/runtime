@@ -15,7 +15,7 @@ namespace ILCompiler.DependencyAnalysis
         /// <summary>
         /// Appends the mangled name of the symbol to the string builder provided.
         /// </summary>
-        void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb);
+        void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb);
 
         /// <summary>
         /// Gets the offset (delta) from the symbol this <see cref="ISymbolNode"/> references.
@@ -75,21 +75,18 @@ namespace ILCompiler.DependencyAnalysis
 
     public static class ISymbolNodeExtensions
     {
-        [ThreadStatic]
-        private static Utf8StringBuilder s_cachedUtf8StringBuilder;
-
         public static string GetMangledName(this ISymbolNode symbolNode, NameMangler nameMangler)
         {
-            Utf8StringBuilder sb = s_cachedUtf8StringBuilder;
-            sb ??= new Utf8StringBuilder();
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            symbolNode.AppendMangledName(nameMangler, ref sb);
+            return sb.ToStringAndDispose();
+        }
 
-            symbolNode.AppendMangledName(nameMangler, sb);
-            string ret = sb.ToString();
-
-            sb.Clear();
-            s_cachedUtf8StringBuilder = sb;
-
-            return ret;
+        public static Utf8String GetMangledUtf8Name(this ISymbolNode symbolNode, NameMangler nameMangler)
+        {
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            symbolNode.AppendMangledName(nameMangler, ref sb);
+            return sb.ToUtf8StringAndDispose();
         }
     }
 }

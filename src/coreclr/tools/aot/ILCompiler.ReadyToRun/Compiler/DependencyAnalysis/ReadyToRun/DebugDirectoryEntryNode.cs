@@ -34,7 +34,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public int Offset => 0;
 
-        public abstract void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb);
+        public abstract void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb);
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
@@ -85,7 +85,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         private string _entryName;
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append($"__PerfMapDebugDirectoryEntryNode_{_entryName.Replace('.','_')}");
@@ -163,7 +163,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         private string _pdbName;
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append($"__NativeDebugDirectory_{_pdbName.Replace('.','_')}");
@@ -238,7 +238,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             _debugEntryIndex = debugEntryIndex;
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             sb.Append($"__CopiedDebugEntryNode_{_debugEntryIndex}_{_module.Assembly.GetName().Name}");
