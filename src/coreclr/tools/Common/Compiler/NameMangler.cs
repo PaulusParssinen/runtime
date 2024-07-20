@@ -24,7 +24,7 @@ namespace ILCompiler
 #endif
 
         /// <summary>
-        /// Used in multi-module builds to prevent ambiguous symbols in linked object files.
+        /// Used in multi-module builds to disambiguate symbols.
         /// </summary>
         public abstract string CompilationUnitPrefix { get; set; }
 
