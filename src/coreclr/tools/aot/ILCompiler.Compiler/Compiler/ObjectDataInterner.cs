@@ -3,9 +3,8 @@
 
 using System;
 using System.Collections.Generic;
-
 using ILCompiler.DependencyAnalysis;
-
+using Internal.Text;
 using Debug = System.Diagnostics.Debug;
 
 namespace ILCompiler
@@ -36,7 +35,7 @@ namespace ILCompiler
 
                 // Bodies that are visible from outside should not be folded because we don't know
                 // if they're address taken.
-                if (factory.GetSymbolAlternateName(body) != null)
+                if (factory.GetSymbolAlternateName(body) != default(Utf8String))
                     continue;
 
                 var key = new MethodInternKey(body, factory);

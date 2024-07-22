@@ -32,12 +32,12 @@ namespace ILCompiler.DependencyAnalysis
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__fat"u8);
+            sb.AppendLiteral("__fat");
             if (_isUnboxingStub)
-                sb.Append("unbox"u8);
+                sb.AppendLiteral("unbox");
             if (_isAddressTaken)
-                sb.Append("addresstaken"u8);
-            sb.Append("pointer_"u8);
+                sb.AppendLiteral("addresstaken");
+            sb.AppendLiteral("pointer_");
             nameMangler.AppendMangledMethodName(Method, ref sb);
         }
 
