@@ -71,14 +71,13 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
             string directoryName;
             if (_module != null)
                 directoryName = _module.Assembly.GetName().Name;
             else
                 directoryName = "Composite";
 
-            sb.Append($"__DebugDirectory_{directoryName}");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__DebugDirectory_{directoryName}");
         }
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

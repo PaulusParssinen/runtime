@@ -24,7 +24,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("MethodGCInfoNode->"u8);
+            sb.AppendLiteral("MethodGCInfoNode->");
             _methodNode.AppendMangledName(nameMangler, ref sb);
         }
 
@@ -278,9 +278,8 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         protected override string GetName(NodeFactory context)
         {
             Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-            sb.Append("MethodGCInfo->"u8);
-            _methodNode.AppendMangledName(context.NameMangler, ref sb);
-            return sb.ToString();
+            AppendMangledName(context.NameMangler, ref sb);
+            return sb.ToStringAndDispose();
         }
 
         public override IEnumerable<DependencyListEntry> GetStaticDependencies(NodeFactory context) => null;

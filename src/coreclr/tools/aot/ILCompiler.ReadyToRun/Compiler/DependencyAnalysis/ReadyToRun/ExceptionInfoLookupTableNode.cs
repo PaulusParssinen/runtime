@@ -43,7 +43,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             // EH info node is a singleton in the R2R PE file
-            sb.Append("EHInfoNode"u8);
+            sb.AppendLiteral("EHInfoNode");
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)
@@ -51,12 +51,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return new ObjectData(_ehInfoBuilder.ToArray(), Array.Empty<Relocation>(), alignment: 4, definedSymbols: new ISymbolDefinitionNode[] { this });
         }
 
-        protected override string GetName(NodeFactory context)
-        {
-            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-            AppendMangledName(context.NameMangler, ref sb);
-            return sb.ToString();
-        }
+        protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
     }
 
     public class ExceptionInfoLookupTableNode : HeaderTableNode
@@ -76,9 +71,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__ReadyToRunExceptionInfoLookupTable@"u8);
-            sb.Append(Offset.ToString());
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__ReadyToRunExceptionInfoLookupTable@{Offset}");
         }
 
         internal void LayoutMethodsWithEHInfo()

@@ -106,8 +106,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($"_FieldRvaData_{_module.Assembly.GetName().Name}_{_rva}");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}_FieldRvaData_{_module.Assembly.GetName().Name}_{_rva}");
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

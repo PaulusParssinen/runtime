@@ -34,9 +34,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("StringImportSignature: "u8);
-            sb.Append(_token.ToString());
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}StringImportSignature: {_token}");
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

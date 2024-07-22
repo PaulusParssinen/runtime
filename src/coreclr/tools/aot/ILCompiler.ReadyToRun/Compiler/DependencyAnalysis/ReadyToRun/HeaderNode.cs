@@ -65,17 +65,11 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public sealed override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}{ModuleSpecificName}");
             if (_module != null)
             {
-                sb.Append(ModuleSpecificName);
                 sb.Append(_module.Assembly.GetName().Name);
             }
-            else
-            {
-                sb.Append(ModuleSpecificName);
-            }
-
         }
     }
 
@@ -219,8 +213,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         protected override void AppendMangledHeaderName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__ReadyToRunHeader"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__ReadyToRunHeader");
         }
 
         protected override void EmitHeaderPrefix(ref ObjectDataBuilder builder)
@@ -257,9 +250,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         protected override void AppendMangledHeaderName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__ReadyToRunAssemblyHeader__"u8);
-            sb.Append(_index.ToString());
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__ReadyToRunAssemblyHeader__{_index}");
         }
 
         public override int ClassCode => (int)ObjectNodeOrder.ReadyToRunAssemblyHeaderNode;

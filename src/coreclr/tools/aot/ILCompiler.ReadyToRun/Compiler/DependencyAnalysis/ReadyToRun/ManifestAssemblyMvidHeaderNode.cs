@@ -37,16 +37,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__ManifestAssemblyMvids"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__ManifestAssemblyMvids");
         }
 
-        protected override string GetName(NodeFactory nodeFactory)
-        {
-            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-            AppendMangledName(nodeFactory.NameMangler, ref sb);
-            return sb.ToString();
-        }
+        protected override string GetName(NodeFactory nodeFactory) => this.GetMangledName(nodeFactory.NameMangler);
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)
         {

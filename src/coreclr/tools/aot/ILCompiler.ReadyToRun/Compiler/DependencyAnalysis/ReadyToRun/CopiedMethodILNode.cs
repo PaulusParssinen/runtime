@@ -33,7 +33,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("ILMethod_"u8);
+            sb.AppendLiteral("ILMethod_");
             nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 

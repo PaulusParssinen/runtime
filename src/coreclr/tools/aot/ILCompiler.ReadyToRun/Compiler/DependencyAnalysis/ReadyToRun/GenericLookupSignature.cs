@@ -142,16 +142,11 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("GenericLookupSignature("u8);
-            sb.Append(_runtimeLookupKind.ToString());
-            sb.Append(" / "u8);
-            sb.Append(_fixupKind.ToString());
-            sb.Append(": "u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}GenericLookupSignature({_runtimeLookupKind} / {_fixupKind}: ");
             if (_methodArgument != null)
             {
                 nameMangler.AppendMangledTypeName(_methodArgument.OwningType, ref sb);
-                sb.Append("::"u8);
+                sb.AppendLiteral("::");
                 nameMangler.AppendMangledMethodName(_methodArgument.Method, ref sb);
                 if (_methodArgument.ConstrainedType != null)
                 {
@@ -160,11 +155,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
                 }
                 if (!_methodArgument.Token.IsNull)
                 {
-                    sb.Append(" ["u8);
+                    sb.AppendLiteral(" [");
                     sb.Append(_methodArgument.Token.MetadataReader.GetString(_methodArgument.Token.MetadataReader.GetAssemblyDefinition().Name));
-                    sb.Append(':');
-                    sb.Append(((uint)_methodArgument.Token.Token).ToString("X8"));
-                    sb.Append(']');
+                    sb.AppendInterpolated($":{((uint)_methodArgument.Token.Token):X8}]");
                 }
             }
             if (_typeArgument != null)
@@ -175,7 +168,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             {
                 _fieldArgument.AppendMangledName(nameMangler, ref sb);
             }
-            sb.Append(" ("u8);
+            sb.AppendLiteral(" (");
             _methodContext.AppendMangledName(nameMangler, ref sb);
             sb.Append(')');
         }

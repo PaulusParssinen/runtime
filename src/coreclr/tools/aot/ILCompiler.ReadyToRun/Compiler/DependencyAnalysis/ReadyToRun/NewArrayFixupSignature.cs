@@ -40,8 +40,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("NewArraySignature: "u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}NewArraySignature: ");
             nameMangler.AppendMangledTypeName(_arrayType, ref sb);
         }
 

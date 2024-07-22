@@ -60,14 +60,13 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($@"VirtualResolutionFixupSignature({_fixupKind.ToString()}): ");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}VirtualResolutionFixupSignature({_fixupKind}): ");
             _declMethod.AppendMangledName(nameMangler, ref sb);
             sb.Append(':');
             nameMangler.AppendMangledTypeName(_implType, ref sb);
             sb.Append(':');
             if (_implMethod == null)
-                sb.Append("(null)"u8);
+                sb.AppendLiteral("(null)");
             else
                 _implMethod.AppendMangledName(nameMangler, ref sb);
         }

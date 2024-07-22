@@ -86,8 +86,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($@"ILBodyFixupSignature({_fixupKind.ToString()}): ");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}ILBodyFixupSignature({_fixupKind}): ");
             nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 

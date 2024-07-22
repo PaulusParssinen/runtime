@@ -33,12 +33,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             Table.AddImport(factory, this);
         }
 
-        protected override string GetName(NodeFactory factory)
-        {
-            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-            AppendMangledName(factory.NameMangler, ref sb);
-            return sb.ToString();
-        }
+        protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
         public override int ClassCode => 667823013;
 
@@ -53,8 +48,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(Table.Name);
-            sb.Append("->"u8);
+            sb.AppendInterpolated($"{Table.Name}->");
             ImportSignature.AppendMangledName(nameMangler, ref sb);
         }
 

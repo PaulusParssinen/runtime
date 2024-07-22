@@ -87,8 +87,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($"__PerfMapDebugDirectoryEntryNode_{_entryName.Replace('.','_')}");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__PerfMapDebugDirectoryEntryNode_{_entryName.Replace('.','_')}");
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)
@@ -165,8 +164,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($"__NativeDebugDirectory_{_pdbName.Replace('.','_')}");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__NativeDebugDirectory_{_pdbName.Replace('.','_')}");
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)
@@ -240,8 +238,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($"__CopiedDebugEntryNode_{_debugEntryIndex}_{_module.Assembly.GetName().Name}");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__CopiedDebugEntryNode_{_debugEntryIndex}_{_module.Assembly.GetName().Name}");
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)

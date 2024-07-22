@@ -521,6 +521,7 @@ namespace ILCompiler.PEWriter
                         offset: alignedOffset + symbol.Offset,
                         size: objectData.Data.Length));
                 }
+                sb.Dispose();
             }
 
             if (objectData.Relocs != null && objectData.Relocs.Length != 0)

@@ -179,8 +179,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__ReadyToRunInstrumentationDataTable"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__ReadyToRunInstrumentationDataTable");
         }
 
         // Register some MDs that had synthesized PGO data created to be physically embedded by this node, and add

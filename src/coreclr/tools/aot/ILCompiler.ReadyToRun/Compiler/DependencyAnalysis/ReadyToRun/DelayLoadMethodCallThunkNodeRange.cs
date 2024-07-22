@@ -29,7 +29,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("DelayLoadMethodCallThunkNodeRange"u8);
+            sb.AppendLiteral("DelayLoadMethodCallThunkNodeRange");
         }
     }
 }

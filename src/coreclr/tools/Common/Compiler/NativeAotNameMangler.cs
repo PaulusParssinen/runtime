@@ -117,7 +117,7 @@ namespace ILCompiler
         /// <param name="sb">The string builder to append the number suffix to.</param>
         private static void AppendDisambiguatingNameSuffix(ReadOnlySpan<byte> name, Dictionary<int, int> nameCounts, ref Utf8StringBuilder sb)
         {
-            int nameHash = Utf8String.GetHashCode(name); // TODO: IAlternateLookup?
+            int nameHash = Utf8String.GetHashCode(name);
 
             // Try to insert the name into the deduplication dictionary with default value (0)
             ref int count = ref CollectionsMarshal.GetValueRefOrAddDefault(nameCounts, nameHash, out bool exists);

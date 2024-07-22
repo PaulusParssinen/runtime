@@ -292,10 +292,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         protected override string GetName(NodeFactory factory)
         {
             Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-            sb.Append("MethodWithGCInfo("u8);
+            sb.AppendLiteral("MethodWithGCInfo(");
             AppendMangledName(factory.NameMangler, ref sb);
             sb.Append(')');
-            return sb.ToString();
+            return sb.ToStringAndDispose();
         }
 
         public override int ClassCode => 315213488;

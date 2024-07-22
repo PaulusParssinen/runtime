@@ -147,14 +147,12 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("MethodFixupSignature("u8);
-            sb.Append(_fixupKind.ToString());
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}MethodFixupSignature({_fixupKind}");
             if (IsInstantiatingStub)
             {
-                sb.Append(" [INST]"u8);
+                sb.AppendLiteral(" [INST]");
             }
-            sb.Append(": "u8);
+            sb.AppendLiteral(": ");
             _method.AppendMangledName(nameMangler, ref sb);
         }
 

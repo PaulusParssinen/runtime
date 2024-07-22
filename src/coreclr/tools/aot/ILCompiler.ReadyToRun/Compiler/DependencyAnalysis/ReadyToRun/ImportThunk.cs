@@ -64,17 +64,12 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("DelayLoadHelper->"u8);
+            sb.AppendLiteral("DelayLoadHelper->");
             _helperCell.AppendMangledName(nameMangler, ref sb);
-            sb.Append($"(ImportSection:{_containingImportSection.Name},Kind:{_thunkKind})");
+            sb.AppendInterpolated($"(ImportSection:{_containingImportSection.Name},Kind:{_thunkKind})");
         }
 
-        protected override string GetName(NodeFactory factory)
-        {
-            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
-            AppendMangledName(factory.NameMangler, ref sb);
-            return sb.ToString();
-        }
+        protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
         public override int ClassCode => 433266948;
 

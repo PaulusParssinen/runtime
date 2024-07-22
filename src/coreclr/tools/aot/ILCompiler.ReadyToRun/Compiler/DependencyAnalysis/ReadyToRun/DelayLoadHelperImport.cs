@@ -39,21 +39,20 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("DelayLoadHelperImport("u8);
+            sb.AppendLiteral("DelayLoadHelperImport(");
             if (_useVirtualCall)
             {
-                sb.Append("[VSD] "u8);
+                sb.AppendLiteral("[VSD] ");
             }
             if (_useJumpableStub)
             {
-                sb.Append("[JMP] "u8);
+                sb.AppendLiteral("[JMP] ");
             }
-            sb.Append(_helper.ToString());
-            sb.Append(") -> "u8);
+            sb.AppendInterpolated($"{_helper}) -> ");
             ImportSignature.AppendMangledName(nameMangler, ref sb);
             if (CallingMethod != null)
             {
-                sb.Append(" @ "u8);
+                sb.AppendLiteral(" @ ");
                 nameMangler.AppendMangledMethodName(CallingMethod, ref sb);
             }
         }
