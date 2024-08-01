@@ -30,7 +30,7 @@ namespace ILCompiler.DependencyAnalysis
         public int Size => ObjectType.Context.Target.PointerSize + ContentSize; // SyncBlock + size of contents
         protected abstract int ContentSize { get; }
 
-        public abstract void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb);
+        public abstract void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb);
 
         public sealed override bool StaticDependenciesAreComputed => true;
 

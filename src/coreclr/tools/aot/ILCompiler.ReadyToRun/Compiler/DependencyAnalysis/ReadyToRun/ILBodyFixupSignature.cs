@@ -84,11 +84,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return dataBuilder.ToObjectData();
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($@"ILBodyFixupSignature({_fixupKind.ToString()}): ");
-            sb.Append(nameMangler.GetMangledMethodName(_method));
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}ILBodyFixupSignature({_fixupKind}): ");
+            nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

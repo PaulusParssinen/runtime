@@ -42,10 +42,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             }
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("GCRefMap->"u8);
-            sb.Append(_importSection.Name);
+            sb.AppendInterpolated($"GCRefMap->{_importSection.Name}");
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)
@@ -108,12 +107,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return builder.Builder.ToObjectData();
         }
 
-        protected override string GetName(NodeFactory factory)
-        {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            AppendMangledName(factory.NameMangler, sb);
-            return sb.ToString();
-        }
+        protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)
         {

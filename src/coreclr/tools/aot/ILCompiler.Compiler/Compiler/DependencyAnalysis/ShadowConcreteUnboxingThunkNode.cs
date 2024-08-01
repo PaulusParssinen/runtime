@@ -29,9 +29,9 @@ namespace ILCompiler.DependencyAnalysis
         public MethodDesc Method { get; }
 
         // Implementation of ISymbolNode that makes this node act as a symbol for the canonical body
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            _canonicalThunk.AppendMangledName(nameMangler, sb);
+            _canonicalThunk.AppendMangledName(nameMangler, ref sb);
         }
         public int Offset => _canonicalThunk.Offset;
         public bool RepresentsIndirectionCell => _canonicalThunk.RepresentsIndirectionCell;

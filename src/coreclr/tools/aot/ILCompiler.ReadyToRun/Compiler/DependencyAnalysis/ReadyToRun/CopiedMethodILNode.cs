@@ -31,10 +31,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public int Offset => 0;
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("ILMethod_"u8);
-            sb.Append(nameMangler.GetMangledMethodName(_method));
+            sb.AppendLiteral("ILMethod_");
+            nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)

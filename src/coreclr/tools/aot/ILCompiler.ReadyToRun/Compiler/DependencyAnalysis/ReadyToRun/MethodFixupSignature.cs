@@ -145,17 +145,15 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return dataBuilder.ToObjectData();
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($@"MethodFixupSignature(");
-            sb.Append(_fixupKind.ToString());
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}MethodFixupSignature({_fixupKind}");
             if (IsInstantiatingStub)
             {
-                sb.Append(" [INST]"u8);
+                sb.AppendLiteral(" [INST]");
             }
-            sb.Append(": "u8);
-            _method.AppendMangledName(nameMangler, sb);
+            sb.AppendLiteral(": ");
+            _method.AppendMangledName(nameMangler, ref sb);
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

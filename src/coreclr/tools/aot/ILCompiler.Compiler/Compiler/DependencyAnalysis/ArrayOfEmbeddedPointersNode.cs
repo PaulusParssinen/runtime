@@ -112,9 +112,9 @@ namespace ILCompiler.DependencyAnalysis
 
             int ISymbolDefinitionNode.Offset => OffsetFromBeginningOfArray;
 
-            public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+            public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
             {
-                sb.Append(nameMangler.CompilationUnitPrefix).Append(_parentNode._startSymbolMangledName).Append("_"u8).Append(_id.ToStringInvariant());
+                sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}{_parentNode._startSymbolMangledName}_{_id}");
             }
         }
     }

@@ -32,9 +32,9 @@ namespace ILCompiler.DependencyAnalysis
         protected internal override int Phase => (int)ObjectNodePhase.Ordered;
         public override int ClassCode => (int)ObjectNodeOrder.StackTraceMethodMappingNode;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("_stacktrace_methodRVA_to_token_mapping"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}_stacktrace_methodRVA_to_token_mapping");
         }
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

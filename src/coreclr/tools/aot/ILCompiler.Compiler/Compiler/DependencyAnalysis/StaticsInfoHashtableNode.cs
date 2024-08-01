@@ -27,9 +27,9 @@ namespace ILCompiler.DependencyAnalysis
 
         int INodeWithSize.Size => _size.Value;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("_StaticsInfoHashtableNode"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}_StaticsInfoHashtableNode");
         }
 
         public int Offset => 0;

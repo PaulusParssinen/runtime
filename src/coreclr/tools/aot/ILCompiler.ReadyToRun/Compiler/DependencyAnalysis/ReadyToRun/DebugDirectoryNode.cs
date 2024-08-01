@@ -69,16 +69,15 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             + (_perfMapEntry is not null ? 1 : 0)
             + (_insertDeterministicEntry ? 1 : 0)) * ImageDebugDirectorySize;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
             string directoryName;
             if (_module != null)
                 directoryName = _module.Assembly.GetName().Name;
             else
                 directoryName = "Composite";
 
-            sb.Append($"__DebugDirectory_{directoryName}");
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__DebugDirectory_{directoryName}");
         }
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

@@ -23,9 +23,9 @@ namespace ILCompiler.DependencyAnalysis
             _externalReferences = externalReferences;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__generic_methods_hashtable"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__generic_methods_hashtable");
         }
 
         int INodeWithSize.Size => _size.Value;

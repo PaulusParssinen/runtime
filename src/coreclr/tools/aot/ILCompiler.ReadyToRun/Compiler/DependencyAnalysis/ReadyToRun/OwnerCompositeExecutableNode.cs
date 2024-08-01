@@ -27,9 +27,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             _ownerExecutableName = ownerExecutableName;
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__ReadyToRunHeader_OwnerCompositeExecutable"u8);
+            sb.AppendLiteral("__ReadyToRunHeader_OwnerCompositeExecutable");
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)

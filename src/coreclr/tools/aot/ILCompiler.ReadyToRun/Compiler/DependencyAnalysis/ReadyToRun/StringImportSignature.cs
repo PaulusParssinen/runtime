@@ -32,10 +32,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return dataBuilder.ToObjectData();
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("StringImportSignature: " + _token.ToString());
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}StringImportSignature: {_token}");
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

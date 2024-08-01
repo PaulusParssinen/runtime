@@ -47,13 +47,13 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return new DirectoryEntry(rva, size);
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
             if (_module != null)
-                sb.Append($"__CorHeader_{_module.Assembly.GetName().Name}");
+                sb.AppendInterpolated($"__CorHeader_{_module.Assembly.GetName().Name}");
             else
-                sb.Append("__CompositeCorHeader_"u8);
+                sb.AppendLiteral("__CompositeCorHeader_");
         }
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

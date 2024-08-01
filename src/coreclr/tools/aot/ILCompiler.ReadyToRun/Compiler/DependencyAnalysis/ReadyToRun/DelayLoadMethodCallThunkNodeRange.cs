@@ -27,9 +27,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public override IEnumerable<CombinedDependencyListEntry> SearchDynamicDependencies(List<DependencyNodeCore<NodeFactory>> markedNodes, int firstNode, NodeFactory context) => null;
         protected override string GetName(NodeFactory context) => "DelayLoadMethodCallThunkNodeRange";
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(GetName(null));
+            sb.AppendLiteral("DelayLoadMethodCallThunkNodeRange");
         }
     }
 }

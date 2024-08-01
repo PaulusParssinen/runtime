@@ -104,11 +104,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override int ClassCode => 56557889;
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("ReadyToRunInstructionSets_"u8);
-            sb.Append(_instructionSetsSupport);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}ReadyToRunInstructionSets_{_instructionSetsSupport}");
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

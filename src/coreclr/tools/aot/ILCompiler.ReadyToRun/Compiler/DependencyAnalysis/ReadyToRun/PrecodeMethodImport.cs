@@ -39,10 +39,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         
         public override int ClassCode => 30624770;
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("PrecodeMethodImport -> "u8);
-            base.AppendMangledName(nameMangler, sb);
+            sb.AppendLiteral("PrecodeMethodImport -> ");
+            base.AppendMangledName(nameMangler, ref sb);
         }
 
         public override IEnumerable<DependencyListEntry> GetStaticDependencies(NodeFactory factory)

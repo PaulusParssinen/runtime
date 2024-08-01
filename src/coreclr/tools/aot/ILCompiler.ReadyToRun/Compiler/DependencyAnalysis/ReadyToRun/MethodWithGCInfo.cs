@@ -284,18 +284,18 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override bool StaticDependenciesAreComputed => _methodCode != null;
 
-        public virtual void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.GetMangledMethodName(_method));
+            nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 
         protected override string GetName(NodeFactory factory)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            sb.Append("MethodWithGCInfo("u8);
-            AppendMangledName(factory.NameMangler, sb);
-            sb.Append(")"u8);
-            return sb.ToString();
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            sb.AppendLiteral("MethodWithGCInfo(");
+            AppendMangledName(factory.NameMangler, ref sb);
+            sb.Append(')');
+            return sb.ToStringAndDispose();
         }
 
         public override int ClassCode => 315213488;

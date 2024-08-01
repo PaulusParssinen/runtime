@@ -504,20 +504,24 @@ namespace ILCompiler.PEWriter
 
             if (objectData.DefinedSymbols != null)
             {
+                Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
                 foreach (ISymbolDefinitionNode symbol in objectData.DefinedSymbols)
                 {
                     if (outputInfoBuilder != null)
                     {
-                        Utf8StringBuilder sb = new Utf8StringBuilder();
-                        symbol.AppendMangledName(GetNameMangler(), sb);
+                        symbol.AppendMangledName(GetNameMangler(), ref sb);
+                        string mangledSymbolName = sb.ToString();
+                        sb.Clear();
+                        
                         int sectionRelativeOffset = alignedOffset + symbol.Offset;
-                        outputInfoBuilder.AddSymbol(new OutputSymbol(sectionIndex, sectionRelativeOffset, sb.ToString()));
+                        outputInfoBuilder.AddSymbol(new OutputSymbol(sectionIndex, sectionRelativeOffset, mangledSymbolName));
                     }
                     _symbolMap.Add(symbol, new SymbolTarget(
                         sectionIndex: sectionIndex,
                         offset: alignedOffset + symbol.Offset,
                         size: objectData.Data.Length));
                 }
+                sb.Dispose();
             }
 
             if (objectData.Relocs != null && objectData.Relocs.Length != 0)

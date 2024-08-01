@@ -23,9 +23,9 @@ namespace ILCompiler.DependencyAnalysis
 
         int INodeWithSize.Size => _size.Value;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__ptr_type_map"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__ptr_type_map");
         }
         public int Offset => 0;
         public override bool IsShareable => false;

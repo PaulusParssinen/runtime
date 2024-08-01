@@ -21,9 +21,10 @@ namespace ILCompiler.DependencyAnalysis
         public override ObjectNodeSection GetSection(NodeFactory factory) => ObjectNodeSection.ReadOnlyDataSection;
         public override bool StaticDependenciesAreComputed => _data != null;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("__readonlydata_" + nameMangler.GetMangledMethodName(_owningMethod));
+            sb.AppendLiteral("__readonlydata_");
+            nameMangler.AppendMangledMethodName(_owningMethod, ref sb);
         }
         public int Offset => 0;
         public override bool IsShareable => true;

@@ -73,16 +73,13 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             );
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($@"DelegateCtor(");
-            sb.Append(nameMangler.GetMangledTypeName(_delegateType));
-            sb.Append(" -> "u8);
-            _targetMethod.AppendMangledName(nameMangler, sb);
-            sb.Append("; "u8);
-            sb.Append(_methodToken.ToString());
-            sb.Append(")"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}DelegateCtor(");
+            nameMangler.AppendMangledTypeName(_delegateType, ref sb);
+            sb.AppendLiteral(" -> ");
+            _targetMethod.AppendMangledName(nameMangler, ref sb);
+            sb.AppendInterpolated($"; {_methodToken})");
         }
 
         public override int CompareToImpl(ISortableNode other, CompilerComparer comparer)

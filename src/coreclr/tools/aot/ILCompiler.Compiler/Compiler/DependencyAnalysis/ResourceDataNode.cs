@@ -38,9 +38,9 @@ namespace ILCompiler.DependencyAnalysis
 
         public int Offset => 0;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__embedded_resourcedata"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__embedded_resourcedata");
         }
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

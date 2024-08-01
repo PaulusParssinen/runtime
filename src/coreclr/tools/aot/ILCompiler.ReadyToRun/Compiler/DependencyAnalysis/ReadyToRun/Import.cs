@@ -33,12 +33,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             Table.AddImport(factory, this);
         }
 
-        protected override string GetName(NodeFactory factory)
-        {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            AppendMangledName(factory.NameMangler, sb);
-            return sb.ToString();
-        }
+        protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
 
         public override int ClassCode => 667823013;
 
@@ -51,11 +46,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             dataBuilder.EmitZeroPointer();
         }
 
-        public virtual void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(Table.Name);
-            sb.Append("->"u8);
-            ImportSignature.AppendMangledName(nameMangler, sb);
+            sb.AppendInterpolated($"{Table.Name}->");
+            ImportSignature.AppendMangledName(nameMangler, ref sb);
         }
 
         public override bool StaticDependenciesAreComputed => true;

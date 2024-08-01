@@ -40,9 +40,9 @@ namespace ILCompiler.DependencyAnalysis
             _vertexNodesToWrite = new List<NativeLayoutVertexNode>();
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__nativelayoutinfo"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__nativelayoutinfo");
         }
         int INodeWithSize.Size => _size.Value;
         public int Offset => 0;

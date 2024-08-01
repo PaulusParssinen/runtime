@@ -30,10 +30,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             _assemblyHeaders.Add(componentAssemblyHeader);
         }
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("__ReadyToRunAssemblyTable"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__ReadyToRunAssemblyTable");
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)

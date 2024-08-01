@@ -262,9 +262,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override int ClassCode => 791828335;
 
-        public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public override void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("ManifestMetadataTableNode"u8);
+            sb.AppendLiteral("ManifestMetadataTableNode");
         }
 
         private void ComputeLastSetOfModuleIndices()

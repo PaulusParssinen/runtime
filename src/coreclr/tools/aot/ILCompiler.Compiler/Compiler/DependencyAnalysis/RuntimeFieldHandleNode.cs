@@ -19,11 +19,10 @@ namespace ILCompiler.DependencyAnalysis
             _targetField = targetField;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix)
-              .Append("__RuntimeFieldHandle_"u8)
-              .Append(nameMangler.GetMangledFieldName(_targetField));
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__RuntimeFieldHandle_");
+            nameMangler.AppendMangledFieldName(_targetField, ref sb);
         }
         public int Offset => 0;
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);
@@ -38,7 +37,7 @@ namespace ILCompiler.DependencyAnalysis
                 return ObjectNodeSection.DataSection;
         }
 
-        private static readonly Utf8String s_NativeLayoutSignaturePrefix = new Utf8String("__RFHSignature_");
+        private static readonly Utf8String s_NativeLayoutSignaturePrefix = new Utf8String("__RFHSignature_"u8);
 
         protected override DependencyList ComputeNonRelocationBasedDependencies(NodeFactory factory)
         {

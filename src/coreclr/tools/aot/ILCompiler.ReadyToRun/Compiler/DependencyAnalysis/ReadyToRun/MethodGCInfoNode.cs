@@ -22,10 +22,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override int ClassCode => 892356612;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("MethodGCInfoNode->"u8);
-            _methodNode.AppendMangledName(nameMangler, sb);
+            sb.AppendLiteral("MethodGCInfoNode->");
+            _methodNode.AppendMangledName(nameMangler, ref sb);
         }
 
         protected override void OnMarked(NodeFactory factory)
@@ -277,10 +277,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         protected override string GetName(NodeFactory context)
         {
-            Utf8StringBuilder sb = new Utf8StringBuilder();
-            sb.Append("MethodGCInfo->"u8);
-            _methodNode.AppendMangledName(context.NameMangler, sb);
-            return sb.ToString();
+            Utf8StringBuilder sb = new Utf8StringBuilder(stackalloc byte[256]);
+            AppendMangledName(context.NameMangler, ref sb);
+            return sb.ToStringAndDispose();
         }
 
         public override IEnumerable<DependencyListEntry> GetStaticDependencies(NodeFactory context) => null;

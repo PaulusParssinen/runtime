@@ -7,9 +7,9 @@ namespace ILCompiler.DependencyAnalysis
 {
     public class TypeManagerIndirectionNode : ObjectNode, ISymbolDefinitionNode
     {
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.CompilationUnitPrefix).Append("__typemanager_indirection"u8);
+            sb.AppendInterpolated($"{nameMangler.CompilationUnitPrefix}__typemanager_indirection");
         }
         public int Offset => 0;
         public override bool IsShareable => false;

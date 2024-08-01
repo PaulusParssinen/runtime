@@ -93,11 +93,10 @@ namespace Internal.JitInterface
             return Field == fieldWithToken.Field && Token.Equals(fieldWithToken.Token);
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.GetMangledFieldName(Field));
-            sb.Append("; "u8);
-            sb.Append(Token.ToString());
+            nameMangler.AppendMangledFieldName(Field, ref sb);
+            sb.AppendInterpolated($"; {Token}");
         }
 
         public override string ToString()
@@ -331,24 +330,24 @@ namespace Internal.JitInterface
             return equals;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.GetMangledMethodName(Method));
+            nameMangler.AppendMangledMethodName(Method, ref sb);
             if (ConstrainedType != null)
             {
-                sb.Append(" @ "u8);
-                sb.Append(nameMangler.GetMangledTypeName(ConstrainedType));
+                sb.AppendLiteral(" @ ");
+                nameMangler.AppendMangledTypeName(ConstrainedType, ref sb);
             }
-            sb.Append("; "u8);
+            sb.AppendLiteral("; ");
             sb.Append(Token.ToString());
             if (OwningTypeNotDerivedFromToken)
             {
-                sb.Append("; OWNINGTYPE"u8);
-                sb.Append(nameMangler.GetMangledTypeName(OwningType));
-                sb.Append("; "u8);
+                sb.AppendLiteral("; OWNINGTYPE");
+                nameMangler.AppendMangledTypeName(OwningType, ref sb);
+                sb.AppendLiteral("; ");
             }
             if (Unboxing)
-                sb.Append("; UNBOXING"u8);
+                sb.AppendLiteral("; UNBOXING");
         }
 
         public override string ToString()
@@ -431,15 +430,15 @@ namespace Internal.JitInterface
 
         public override int GetHashCode() => Context.GetHashCode();
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
             if (Context is MethodDesc contextAsMethod)
             {
-                sb.Append(nameMangler.GetMangledMethodName(contextAsMethod));
+                nameMangler.AppendMangledMethodName(contextAsMethod, ref sb);
             }
             else
             {
-                sb.Append(nameMangler.GetMangledTypeName(ContextType));
+                nameMangler.AppendMangledTypeName(ContextType, ref sb);
             }
         }
     }

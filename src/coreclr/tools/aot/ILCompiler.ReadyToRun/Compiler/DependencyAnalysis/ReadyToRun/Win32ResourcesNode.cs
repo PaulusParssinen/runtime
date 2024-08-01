@@ -31,9 +31,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public int Offset => 0;
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("____Win32Resources"u8);
+            sb.AppendLiteral("____Win32Resources");
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)

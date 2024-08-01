@@ -65,9 +65,9 @@ namespace ILCompiler.DependencyAnalysis
             _exception = scanningException;
         }
 
-        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append(nameMangler.GetMangledMethodName(_method));
+            nameMangler.AppendMangledMethodName(_method, ref sb);
         }
 
         public override IEnumerable<DependencyListEntry> GetStaticDependencies(NodeFactory factory)

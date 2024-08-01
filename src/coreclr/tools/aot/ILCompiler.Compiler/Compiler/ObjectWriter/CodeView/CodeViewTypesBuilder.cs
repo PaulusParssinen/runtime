@@ -11,6 +11,7 @@ using System.Text;
 
 using ILCompiler.DependencyAnalysis;
 using Internal.JitInterface;
+using Internal.Text;
 using Internal.TypeSystem;
 using Internal.TypeSystem.TypesDebugInfo;
 
@@ -22,7 +23,7 @@ using static ILCompiler.ObjectWriter.CodeViewNative.LeafRecordType;
 
 namespace ILCompiler.ObjectWriter
 {
-    /// <summary>Builder for the CodeView .debug$T section.<summary>
+    /// <summary>Builder for the CodeView .debug$T section.</summary>
     /// <remarks>
     /// The .debug$T section in CodeView contains type (enum, struct, class)
     /// descriptions. The section is composed of records that are prefixed
@@ -31,7 +32,7 @@ namespace ILCompiler.ObjectWriter
     /// 0x1000 and increase by one for each record. Elementary types, such
     /// as uint, short, or float, have preassigned indexes below 0x1000,
     /// represented by the <see cref="CodeViewType" /> enumeration.
-    ///
+    /// <para />
     /// The maximum record size is limited to sizeof(ushort) due to the
     /// layout of the record header. List records (eg. field list) can
     /// be split into multiple records that are chained together.
@@ -44,11 +45,11 @@ namespace ILCompiler.ObjectWriter
 
         private readonly uint _classVTableTypeIndex;
         private readonly uint _vfuncTabTypeIndex;
-        private readonly List<(string, uint)> _userDefinedTypes = new();
+        private readonly List<(Utf8String, uint)> _userDefinedTypes = new();
 
         private uint _nextTypeIndex = 0x1000;
 
-        public IList<(string, uint)> UserDefinedTypes => _userDefinedTypes;
+        public IList<(Utf8String, uint)> UserDefinedTypes => _userDefinedTypes;
 
         public CodeViewTypesBuilder(NameMangler nameMangler, int targetPointerSize, SectionWriter sectionWriter)
         {
@@ -382,7 +383,7 @@ namespace ILCompiler.ObjectWriter
             return _nextTypeIndex++;
         }
 
-        public string GetMangledName(TypeDesc type)
+        public Utf8String GetMangledName(TypeDesc type)
         {
             return _nameMangler.GetMangledTypeName(type);
         }
@@ -448,6 +449,13 @@ namespace ILCompiler.ObjectWriter
             {
                 int byteCount = Encoding.UTF8.GetByteCount(value) + 1;
                 Encoding.UTF8.GetBytes(value, _bufferWriter.GetSpan(byteCount));
+                _bufferWriter.Advance(byteCount);
+            }
+
+            public void Write(Utf8String value)
+            {
+                int byteCount = value.Length + 1;
+                value.AsSpan().CopyTo(_bufferWriter.GetSpan(byteCount));
                 _bufferWriter.Advance(byteCount);
             }
 

@@ -40,10 +40,10 @@ namespace ILCompiler.DependencyAnalysis
 
         int ISymbolNode.Offset => 0;
 
-        public virtual void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        public virtual void AppendMangledName(NameMangler nameMangler, ref Utf8StringBuilder sb)
         {
-            sb.Append("_embedded_ptr_"u8);
-            Target.AppendMangledName(nameMangler, sb);
+            sb.AppendLiteral("_embedded_ptr_");
+            Target.AppendMangledName(nameMangler, ref sb);
         }
 
         public override int ClassCode => -2055384490;
