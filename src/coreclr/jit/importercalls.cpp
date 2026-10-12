@@ -5589,6 +5589,7 @@ GenTree* Compiler::impIntrinsic(CORINFO_CLASS_HANDLE    clsHnd,
                 break;
             }
 
+            case NI_System_Text_UTF8Encoding_UTF8EncodingSealed_GetByteCount:
             case NI_System_Text_UTF8Encoding_UTF8EncodingSealed_ReadUtf8:
             case NI_System_SpanHelpers_SequenceEqual:
             case NI_System_SpanHelpers_ClearWithoutReferences:
@@ -12668,6 +12669,11 @@ NamedIntrinsic Compiler::lookupNamedIntrinsic(CORINFO_METHOD_HANDLE method)
                         {
                             assert(strcmp(enclosingClassNames[0], "UTF8Encoding") == 0);
                             result = NI_System_Text_UTF8Encoding_UTF8EncodingSealed_ReadUtf8;
+                        }
+                        else if (strcmp(methodName, "GetByteCount") == 0)
+                        {
+                            assert(strcmp(enclosingClassNames[0], "UTF8Encoding") == 0);
+                            result = NI_System_Text_UTF8Encoding_UTF8EncodingSealed_GetByteCount;
                         }
                     }
                 }

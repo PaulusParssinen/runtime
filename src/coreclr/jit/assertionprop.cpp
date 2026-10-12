@@ -12,6 +12,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 #include "jitpch.h"
 #include "rangecheck.h"
+#include <minipal/utf8.h>
 #ifdef _MSC_VER
 #pragma hdrstop
 #endif
@@ -2641,6 +2642,57 @@ bool Compiler::optAssertionVNIsSubtype(ValueNum objVN, ValueNum castToVN, ASSERT
 }
 
 //------------------------------------------------------------------------------
+// optVNBasedFoldExpr_Call_GetByteCount: Folds UTF8EncodingSealed.GetByteCount for immutable UTF-16 input.
+//
+// Arguments:
+//    call - UTF8EncodingSealed.GetByteCount call to fold
+//
+// Return Value:
+//    Returns a new tree or nullptr if nothing is changed.
+//
+GenTree* Compiler::optVNBasedFoldExpr_Call_GetByteCount(GenTreeCall* call)
+{
+    JITDUMP("See if we can optimize UTF8EncodingSealed.GetByteCount with help of VN...\n");
+    assert(call->IsSpecialIntrinsic(this, NI_System_Text_UTF8Encoding_UTF8EncodingSealed_GetByteCount));
+    assert(call->gtArgs.CountUserArgs() == 2);
+
+    GenTree* src    = call->gtArgs.GetUserArgByIndex(0)->GetNode();
+    GenTree* lenArg = call->gtArgs.GetUserArgByIndex(1)->GetNode();
+
+    ValueNum lenVN = optConservativeNormalVN(lenArg);
+    size_t   len   = 0;
+    if (!vnStore->IsVNIntegralConstant(lenVN, &len))
+    {
+        JITDUMP("...length is not a constant - bail out.\n");
+        return nullptr;
+    }
+
+    if (len == 0)
+    {
+        return gtWrapWithSideEffects(gtNewIconNode(0), call, GTF_ALL_EFFECT, true);
+    }
+
+    constexpr size_t maxLen = 256; // Same input limit as ReadUtf8
+    if (len > maxLen)
+    {
+        JITDUMP("...length is too big - bail out.\n");
+        return nullptr;
+    }
+
+    uint8_t* buffer = nullptr;
+    if (!GetImmutableDataFromAddress(src, (int)(len * sizeof(uint16_t)), getAllocator(CMK_AssertionProp), &buffer))
+    {
+        JITDUMP("...data is not known at compile time - bail out.\n");
+        return nullptr;
+    }
+
+    const int byteCount = (int)minipal_get_length_utf16_to_utf8((const CHAR16_T*)buffer, len, 0);
+    assert((byteCount > 0) && (byteCount <= (int)(len * 3)));
+    JITDUMP("...optimize to constant %d.\n", byteCount);
+    return gtWrapWithSideEffects(gtNewIconNode(byteCount), call, GTF_ALL_EFFECT, true);
+}
+
+//------------------------------------------------------------------------------
 // optVNBasedFoldExpr_Call_Memcmp: Folds NI_System_SpanHelpers_SequenceEqual for equal addresses or immutable data.
 //
 // Arguments:
@@ -2965,6 +3017,11 @@ GenTree* Compiler::optVNBasedFoldExpr_Call(BasicBlock* block, GenTree* parent, G
 
         default:
             break;
+    }
+
+    if (call->IsSpecialIntrinsic(this, NI_System_Text_UTF8Encoding_UTF8EncodingSealed_GetByteCount))
+    {
+        return optVNBasedFoldExpr_Call_GetByteCount(call);
     }
 
     if (call->IsSpecialIntrinsic(this, NI_System_SpanHelpers_Memmove) || call->IsHelperCall(CORINFO_HELP_MEMCPY))

@@ -37,6 +37,21 @@ namespace System.Text
                 };
             }
 
+            public override int GetByteCount(string chars)
+            {
+                if (chars is null)
+                {
+                    ThrowHelper.ThrowArgumentNullException(ExceptionArgument.chars);
+                }
+
+                return GetByteCount(ref chars.GetRawStringData(), chars.Length);
+            }
+
+            public override int GetByteCount(ReadOnlySpan<char> chars)
+            {
+                return GetByteCount(ref MemoryMarshal.GetReference(chars), chars.Length);
+            }
+
             public override byte[] GetBytes(string s)
             {
                 // This method is short and can be inlined, meaning that the null check below
@@ -153,6 +168,17 @@ namespace System.Text
             public override bool TryGetBytes(ReadOnlySpan<char> chars, Span<byte> bytes, out int bytesWritten)
             {
                 return base.TryGetBytes(chars, bytes, out bytesWritten);
+            }
+
+            /// <summary>Same as Encoding.UTF8.GetByteCount, except with refs, and optimized for a constant input.</summary>
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            [Intrinsic] // Can be folded by JIT
+            internal static unsafe int GetByteCount(ref char input, int inputLength)
+            {
+                fixed (char* pInput = &input)
+                {
+                    return s_default.GetByteCountCommon(pInput, inputLength);
+                }
             }
 
             /// <summary>Same as Encoding.UTF8.TryGetBytes, except with refs, returning the number of bytes written (or -1 if the operation fails), and optimized for a constant input.</summary>
